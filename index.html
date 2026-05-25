@@ -33,7 +33,7 @@
     <table class="w-full text-left text-xs text-zinc-400">
       <thead>
         <tr class="border-b border-zinc-900 text-zinc-600">
-          <th class="py-2">TIME</th><th>SYM</th><th>PRICE</th><th>SIZE</th>
+          <th class="py-2">TIME</th><th>STOCK</th><th>PRICE</th><th>SIZE</th>
         </tr>
       </thead>
       <tbody id="tape-rows" class="text-emerald-400"></tbody>
@@ -54,11 +54,13 @@
       if (e.key === 'Enter') {
         const sym = e.target.value.toUpperCase();
         document.getElementById('ticker-stats').classList.remove('hidden');
-        document.getElementById('stat-date').innerText = "LOADING...";
+        document.getElementById('stat-date').innerText = "FETCHING...";
         
         try {
-          const url = `https://financialmodelingprep.com/api/v3/historical-price-full/${sym}?timeseries=1&apikey=${API_KEY}`;
-          const res = await fetch(url);
+          // Added headers to prevent the 403 error
+          const res = await fetch(`https://financialmodelingprep.com/api/v3/historical-price-full/${sym}?timeseries=1&apikey=${API_KEY}`, {
+            headers: { 'Accept': 'application/json' }
+          });
           const data = await res.json();
           
           if(data.historical && data.historical.length > 0) {
@@ -70,7 +72,7 @@
             document.getElementById('stat-date').innerText = "NO DATA";
           }
         } catch (err) {
-          document.getElementById('stat-date').innerText = "API ERROR";
+          document.getElementById('stat-date').innerText = "CONN ERROR";
         }
       }
     });
