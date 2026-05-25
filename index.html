@@ -92,18 +92,17 @@
   if (e.key === 'Enter') {
     const symbol = e.target.value.toUpperCase();
     document.getElementById('ticker-stats').classList.remove('hidden');
-    
     const to = Math.floor(Date.now() / 1000);
     const from = to - 86400; 
     const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=60&from=${from}&to=${to}&token=d89q8dhr01qhi7rtj620d89q8dhr01qhi7rtj62g`);
     const data = await res.json();
-    
     if(data.s === 'ok') {
       document.getElementById('stat-open').innerText = data.o[0];
       document.getElementById('stat-close').innerText = data.c[data.c.length - 2];
       document.getElementById('stat-after').innerText = data.c[data.c.length - 1];
     }
   }
+});
 });
 </script>
 <style>
