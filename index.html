@@ -16,6 +16,7 @@
 
   <div class="p-8 border-b border-zinc-900">
     <h1 class="text-white font-bold text-5xl">OVERNIGHT TICKER</h1>
+    <p class="text-xl text-zinc-500 uppercase tracking-widest font-bold mt-2">AFTER HOURS AND OVERNIGHT STOCK FLOW</p>
   </div>
 
   <div class="p-8">
@@ -57,7 +58,6 @@
         document.getElementById('stat-date').innerText = "LOADING...";
         
         try {
-          // This uses AllOrigins as a proxy to bypass security blocks
           const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=1d&interval=1d`;
           const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
           const data = await response.json();
