@@ -2,58 +2,71 @@
 <html class="bg-[#050505]">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ticker</title>
+  <title>OVERNIGHT TERMINAL</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-[#050505] text-emerald-400 font-mono">
-  <div class="p-4 border-b border-zinc-900">
-    <h1 class="text-white font-bold">OVERNIGHT TICKER</h1>
+<body class="text-emerald-400 font-['JetBrains_Mono'] bg-[#050505] min-h-screen flex flex-col">
+
+  <div class="p-4 border-b border-zinc-900 bg-black/50 sticky top-0 z-50">
+    <h1 class="text-lg font-black tracking-wider text-white">OVERNIGHT TICKER</h1>
+    <p class="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Live Flow • Daily Stats</p>
   </div>
 
-  <div class="p-4">
-    <input type="text" id="search-box" placeholder="TYPE TICKER & ENTER" class="w-full bg-zinc-900 text-white p-2 rounded uppercase">
-  </div>
-
-  <div id="stats" class="hidden p-4 bg-zinc-950 text-xs border border-zinc-800 mx-4 rounded">
-    <div id="date-display" class="text-zinc-500 mb-2">DATE: --</div>
-    <div class="flex gap-4 text-white">
-      <span>OPEN: <span id="val-open">--</span></span>
-      <span>CLOSE: <span id="val-close">--</span></span>
-      <span>AH: <span id="val-ah">--</span></span>
+  <div id="ticker-stats" class="hidden p-4 mx-4 mt-4 bg-zinc-950 border border-zinc-800 rounded">
+    <div class="flex justify-between text-[10px] text-zinc-500 uppercase mb-2">
+      <span id="stat-date-label">Last Trading Day</span>
+    </div>
+    <div class="flex justify-between text-xs">
+      <span>OPEN: <span id="stat-open" class="text-white font-bold">--</span></span>
+      <span>CLOSE: <span id="stat-close" class="text-white font-bold">--</span></span>
+      <span>AH: <span id="stat-after" class="text-white font-bold">--</span></span>
     </div>
   </div>
 
+  <div class="p-4">
+    <input type="text" id="search-box" placeholder="SEARCH TICKER..." class="w-full bg-zinc-950 border border-zinc-800 p-2 rounded text-white text-xs uppercase focus:outline-none focus:border-emerald-500">
+  </div>
+
+  <div class="flex-1 overflow-x-auto">
+    <table class="w-full text-left border-collapse"><tbody id="tape-rows"></tbody></table>
+  </div>
+
   <script>
+    const socket = io('https://overnight-tape.onrender.com');
     const searchBox = document.getElementById('search-box');
-    const statsDiv = document.getElementById('stats');
+    const statsBar = document.getElementById('ticker-stats');
+    const POLYGON_KEY = '7YbyChnnKkKvBeBAYPgJUI3tbiUpCq2a';
+
+    socket.on('trade', (t) => {
+      let row = document.getElementById('tape-rows').insertRow(0);
+      row.innerHTML = `<td class="p-3 text-zinc-600">${new Date(t.t).toLocaleTimeString()}</td><td class="font-bold text-slate-100">${t.s}</td><td class="text-emerald-400">$${t.p.toFixed(2)}</td>`;
+      if(document.getElementById('tape-rows').rows.length > 50) document.getElementById('tape-rows').deleteRow(50);
+    });
 
     searchBox.addEventListener('keypress', async (e) => {
       if (e.key === 'Enter') {
         const sym = e.target.value.toUpperCase();
-        statsDiv.classList.remove('hidden');
-        document.getElementById('date-display').innerText = "LOADING...";
+        statsBar.classList.remove('hidden');
         
+        // Auto-correct to Friday if today is Sat/Sun
+        let d = new Date();
+        while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1);
+        const dateStr = d.toISOString().split('T')[0];
+
         try {
-          const to = Math.floor(Date.now() / 1000);
-          const from = to - (86400 * 7);
-          const url = `https://finnhub.io/api/v1/stock/candle?symbol=${sym}&resolution=D&from=${from}&to=${to}&token=d89q8dhr01qhi7rtj62g`;
-          
-          const res = await fetch(url);
+          const res = await fetch(`https://api.polygon.io/v1/open-close/${sym}/${dateStr}?adjusted=true&apiKey=${POLYGON_KEY}`);
           const data = await res.json();
-          
-          if(data.s === 'ok') {
-            const i = data.c.length - 1;
-            document.getElementById('date-display').innerText = "DATE: " + new Date(data.t[i] * 1000).toLocaleDateString();
-            document.getElementById('val-open').innerText = data.o[i].toFixed(2);
-            document.getElementById('val-close').innerText = data.c[i-1].toFixed(2);
-            document.getElementById('val-ah').innerText = data.c[i].toFixed(2);
+          if(data.status === 'OK') {
+            document.getElementById('stat-open').innerText = data.open.toFixed(2);
+            document.getElementById('stat-close').innerText = data.close.toFixed(2);
+            document.getElementById('stat-after').innerText = data.afterHours ? data.afterHours.toFixed(2) : "0.00";
           } else {
-            document.getElementById('date-display').innerText = "ERROR: NO DATA";
+            document.getElementById('stat-open').innerText = "LIMIT";
           }
         } catch (err) {
-          document.getElementById('date-display').innerText = "ERROR: CONNECTION FAILED";
+          console.error(err);
         }
       }
     });
