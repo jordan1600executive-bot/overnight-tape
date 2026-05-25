@@ -87,12 +87,26 @@
           row.classList.add('hidden');
         }
       }
-    });// New Search Logic for Stats Bar
-searchBox.addEventListener('keypress', async (e) => {
+    });//searchBox.addEventListener('keypress', async (e) => {
   if (e.key === 'Enter') {
     const symbol = e.target.value.toUpperCase();
     const statsBar = document.getElementById('ticker-stats');
     statsBar.classList.remove('hidden');
+    
+    // Get hourly candles to find Open, Close, and After-Hours
+    const to = Math.floor(Date.now() / 1000);
+    const from = to - (24 * 60 * 60); 
+    const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=60&from=${from}&to=${to}&token=YOUR_API_KEY_HERE`);
+    const data = await res.json();
+    
+    if(data.s === 'ok') {
+      // data.o[0] is the open, data.c[last-1] is the after-hours/latest, data.c[last-2] is the previous close
+      document.getElementById('stat-open').innerText = data.o[0];
+      document.getElementById('stat-close').innerText = data.c[data.c.length - 2];
+      document.getElementById('stat-after').innerText = data.c[data.c.length - 1];
+    }
+  }
+});
     
     // IMPORTANT: Replace YOUR_FINNHUB_KEY with your actual key from finnhub.io
     const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=d89q8dhr01qhi7rtj620d89q8dhr01qhi7rtj62g`);
