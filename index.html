@@ -95,7 +95,7 @@
     
     const to = Math.floor(Date.now() / 1000);
     const from = to - 86400; 
-    const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=60&from=${from}&to=${to}&token=YOUR_API_KEY_HERE`);
+    const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=60&from=${from}&to=${to}&token=d89q8dhr01qhi7rtj620d89q8dhr01qhi7rtj62g`);
     const data = await res.json();
     
     if(data.s === 'ok') {
