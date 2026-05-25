@@ -2,35 +2,34 @@
 <html class="bg-[#050505]">
 <head>
   <meta charset="UTF-8">
-  <title>OVERNIGHT TERMINAL</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OVERNIGHT TICKER</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
-<body class="text-emerald-400 font-['JetBrains_Mono'] bg-[#050505] min-h-screen flex flex-col">
+<body class="bg-[#050505] text-zinc-500 font-mono text-xs">
 
-  <div class="p-4 border-b border-zinc-900 bg-black/50 sticky top-0 z-50">
-    <h1 class="text-lg font-black tracking-wider text-white">OVERNIGHT TICKER</h1>
-    <p class="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Live Flow • Daily Stats</p>
-  </div>
-
-  <div id="ticker-stats" class="hidden p-4 mx-4 mt-4 bg-zinc-950 border border-zinc-800 rounded">
-    <div class="flex justify-between text-[10px] text-zinc-500 uppercase mb-2">
-      <span id="stat-date-label">Last Trading Day</span>
-    </div>
-    <div class="flex justify-between text-xs">
-      <span>OPEN: <span id="stat-open" class="text-white font-bold">--</span></span>
-      <span>CLOSE: <span id="stat-close" class="text-white font-bold">--</span></span>
-      <span>AH: <span id="stat-after" class="text-white font-bold">--</span></span>
-    </div>
+  <div class="p-4 border-b border-zinc-900">
+    <h1 class="text-white font-bold">OVERNIGHT TICKER</h1>
+    <p class="text-[9px] uppercase tracking-widest text-zinc-600">Live Flow • Overnight Stock Trades</p>
   </div>
 
   <div class="p-4">
-    <input type="text" id="search-box" placeholder="SEARCH TICKER..." class="w-full bg-zinc-950 border border-zinc-800 p-2 rounded text-white text-xs uppercase focus:outline-none focus:border-emerald-500">
+    <input type="text" id="search-box" placeholder="TYPE TICKER & ENTER" class="w-full bg-zinc-900 text-white p-2 rounded uppercase border border-zinc-800 focus:border-emerald-500 outline-none">
   </div>
 
-  <div class="flex-1 overflow-x-auto">
-    <table class="w-full text-left border-collapse"><tbody id="tape-rows"></tbody></table>
+  <div id="ticker-stats" class="hidden p-4 bg-black border-y border-zinc-900 mb-4">
+    <div class="flex justify-between text-zinc-400">
+      <span>OPEN: <span id="stat-open" class="text-white">--</span></span>
+      <span>CLOSE: <span id="stat-close" class="text-white">--</span></span>
+      <span>AH: <span id="stat-after" class="text-white">--</span></span>
+    </div>
+  </div>
+
+  <div id="tape" class="p-4 pt-0">
+    <table class="w-full text-left">
+      <tbody id="tape-rows" class="text-emerald-400"></tbody>
+    </table>
   </div>
 
   <script>
@@ -41,8 +40,8 @@
 
     socket.on('trade', (t) => {
       let row = document.getElementById('tape-rows').insertRow(0);
-      row.innerHTML = `<td class="p-3 text-zinc-600">${new Date(t.t).toLocaleTimeString()}</td><td class="font-bold text-slate-100">${t.s}</td><td class="text-emerald-400">$${t.p.toFixed(2)}</td>`;
-      if(document.getElementById('tape-rows').rows.length > 50) document.getElementById('tape-rows').deleteRow(50);
+      row.innerHTML = `<td class="p-1">${new Date(t.t).toLocaleTimeString()}</td><td class="text-white">${t.s}</td><td class="text-right">$${t.p.toFixed(2)}</td>`;
+      if(document.getElementById('tape-rows').rows.length > 30) document.getElementById('tape-rows').deleteRow(30);
     });
 
     searchBox.addEventListener('keypress', async (e) => {
@@ -50,7 +49,6 @@
         const sym = e.target.value.toUpperCase();
         statsBar.classList.remove('hidden');
         
-        // Auto-correct to Friday if today is Sat/Sun
         let d = new Date();
         while (d.getDay() === 0 || d.getDay() === 6) d.setDate(d.getDate() - 1);
         const dateStr = d.toISOString().split('T')[0];
