@@ -22,7 +22,7 @@
   </div>
 
   <div id="ticker-stats" class="hidden bg-zinc-950 p-3 mx-4 mb-4 border border-zinc-800 rounded">
-    <div class="text-center mb-2 text-[10px] text-zinc-500 uppercase tracking-widest" id="stat-date">DATE: --</div>
+    <div class="text-center mb-2 text-[10px] text-zinc-500 uppercase tracking-widest" id="stat-date">DATE: LOADING...</div>
     <div class="flex justify-center gap-6 text-zinc-400 text-xs">
       <span>OPEN: <span id="stat-open" class="text-white font-bold">--</span></span>
       <span>CLOSE: <span id="stat-close" class="text-white font-bold">--</span></span>
@@ -47,31 +47,41 @@
     const searchBox = document.getElementById('search-box');
     const statsBar = document.getElementById('ticker-stats');
 
+    // Live Trades
     socket.on('trade', (t) => {
       let row = tableBody.insertRow(0);
       row.innerHTML = `<td class="p-3 text-zinc-600">${new Date(t.t).toLocaleTimeString()}</td><td class="font-bold text-slate-100">${t.s}</td><td class="text-emerald-400">$${t.p.toFixed(2)}</td><td class="text-zinc-400">${t.v.toLocaleString()}</td>`;
       if(tableBody.rows.length > 50) tableBody.deleteRow(50);
     });
 
+    // Search Logic
     searchBox.addEventListener('keypress', async (e) => {
       if (e.key === 'Enter') {
         const symbol = e.target.value.toUpperCase();
-        const to = Math.floor(Date.now() / 1000);
-        const from = to - (86400 * 7); 
-        const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=D&from=${from}&to=${to}&token=d89q8dhr01qhi7rtj62g`);
-        const data = await res.json();
+        statsBar.classList.remove('hidden');
+        document.getElementById('stat-open').innerText = "---";
+        document.getElementById('stat-close').innerText = "---";
+        document.getElementById('stat-after').innerText = "---";
         
-        if(data.s === 'ok' && data.t) {
-          statsBar.classList.remove('hidden');
-          const lastIndex = data.t.length - 1;
-          const dateObj = new Date(data.t[lastIndex] * 1000);
+        try {
+          const to = Math.floor(Date.now() / 1000);
+          const from = to - (86400 * 7); 
+          const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=D&from=${from}&to=${to}&token=d89q8dhr01qhi7rtj62g`);
+          const data = await res.json();
           
-          document.getElementById('stat-date').innerText = "DATE: " + dateObj.toLocaleDateString(undefined, {month: 'long', day: 'numeric', year: 'numeric'});
-          document.getElementById('stat-open').innerText = data.o[lastIndex].toFixed(2);
-          document.getElementById('stat-close').innerText = data.c[lastIndex - 1] ? data.c[lastIndex - 1].toFixed(2) : "N/A";
-          document.getElementById('stat-after').innerText = data.c[lastIndex].toFixed(2);
-        } else {
-            console.log("No data returned for:", symbol);
+          if(data.s === 'ok' && data.t && data.t.length > 0) {
+            const idx = data.t.length - 1;
+            const date = new Date(data.t[idx] * 1000).toLocaleDateString(undefined, {month:'long', day:'numeric'});
+            
+            document.getElementById('stat-date').innerText = "DATE: " + date;
+            document.getElementById('stat-open').innerText = data.o[idx].toFixed(2);
+            document.getElementById('stat-close').innerText = data.c[idx-1] ? data.c[idx-1].toFixed(2) : "N/A";
+            document.getElementById('stat-after').innerText = data.c[idx].toFixed(2);
+          } else {
+            document.getElementById('stat-date').innerText = "NO DATA FOUND";
+          }
+        } catch (err) {
+          document.getElementById('stat-date').innerText = "ERROR LOADING";
         }
       }
     });
