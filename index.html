@@ -7,31 +7,36 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <style>body { font-family: 'JetBrains Mono', monospace; }</style>
+  <style>
+    body { font-family: 'JetBrains Mono', monospace; }
+    td, th { padding-left: 4px; padding-right: 4px; }
+  </style>
 </head>
 <body class="bg-[#050505] text-emerald-400">
 
   <div class="p-4 border-b border-zinc-900">
     <h1 class="text-white font-bold text-lg tracking-widest">OVERNIGHT TICKER</h1>
-    <p class="text-[9px] text-zinc-600 uppercase tracking-widest font-bold">AFTER HOURS AND OVERNIGHT STOCK FLOW DATA</p>
+    <p class="text-[8px] text-zinc-600 uppercase tracking-widest font-bold">AFTER HOURS AND OVERNIGHT STOCK FLOW DATA</p>
   </div>
 
-  <div class="p-4">
-    <input type="text" id="search-box" placeholder="SEARCH TICKER (e.g. AAPL, TSLA)" class="w-full bg-[#050505] border border-zinc-800 p-2 text-white text-xs uppercase outline-none focus:border-emerald-500">
+  <div class="p-3">
+    <input type="text" id="search-box" placeholder="SEARCH TICKER..." class="w-full bg-[#050505] border border-zinc-800 p-2 text-white text-[10px] uppercase outline-none focus:border-emerald-500">
   </div>
 
-  <div id="ticker-stats" class="hidden px-4 mb-4">
-    <div class="flex gap-4 text-[9px] text-zinc-500 font-bold uppercase">
+  <div id="ticker-stats" class="hidden px-4 mb-3">
+    <div class="flex gap-3 text-[8px] text-zinc-500 font-bold uppercase">
       <span>DATE: <span id="stat-date" class="text-emerald-600">--</span></span>
       <span>OPEN: <span id="stat-open" class="text-white">--</span></span>
       <span>CLOSE: <span id="stat-close" class="text-white">--</span></span>
     </div>
   </div>
 
-  <div class="px-4">
-    <table class="w-full text-left text-xs text-zinc-400">
+  <div class="px-2">
+    <table class="w-full text-left text-[9px] text-zinc-400 table-fixed">
       <thead>
-        <tr class="border-b border-zinc-900"><th class="py-2">TIME</th><th>SYMBOL</th><th>PRICE</th><th>SIZE</th></tr>
+        <tr class="border-b border-zinc-900 text-zinc-600">
+          <th class="w-1/4 py-1">TIME</th><th class="w-1/4">SYM</th><th class="w-1/4">PRICE</th><th class="w-1/4">SIZE</th>
+        </tr>
       </thead>
       <tbody id="tape-rows" class="text-emerald-400"></tbody>
     </table>
@@ -39,39 +44,36 @@
 
   <script>
     const socket = io('https://overnight-tape.onrender.com');
-    const searchBox = document.getElementById('search-box');
-    const statsBar = document.getElementById('ticker-stats');
-
-    // Live Tape
+    
     socket.on('trade', (t) => {
       let row = document.getElementById('tape-rows').insertRow(0);
-      row.innerHTML = `<td class="py-2">${new Date(t.t).toLocaleTimeString()}</td><td class="text-white font-bold">${t.s}</td><td class="text-emerald-400">$${t.p.toFixed(2)}</td><td>${t.v.toLocaleString()}</td>`;
+      row.innerHTML = `<td class="py-1 truncate">${new Date(t.t).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</td><td class="text-white font-bold truncate">${t.s}</td><td class="text-emerald-400 truncate">$${t.p.toFixed(2)}</td><td class="truncate">${t.v.toLocaleString()}</td>`;
       if(document.getElementById('tape-rows').rows.length > 50) document.getElementById('tape-rows').deleteRow(50);
     });
 
-    // Stats Lookup
-    searchBox.addEventListener('keypress', async (e) => {
+    document.getElementById('search-box').addEventListener('keypress', async (e) => {
       if (e.key === 'Enter') {
         const sym = e.target.value.toUpperCase();
-        statsBar.classList.remove('hidden');
-        document.getElementById('stat-date').innerText = "LOADING...";
+        document.getElementById('ticker-stats').classList.remove('hidden');
+        document.getElementById('stat-date').innerText = "FETCHING...";
         
         try {
-          // Use proxy to avoid Yahoo block
-          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://query2.finance.yahoo.com/v7/finance/quote?symbols='+sym)}`;
-          const res = await fetch(proxyUrl);
+          // Changed to 'chart' endpoint which reliably fetches the last available trading day
+          const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=5d&interval=1d`);
           const data = await res.json();
-          const q = JSON.parse(data.contents).quoteResponse.result[0];
+          const result = data.chart.result[0];
+          const quotes = result.indicators.quote[0];
+          const timestamps = result.timestamp;
           
-          if (!q) throw new Error();
-
-          document.getElementById('stat-date').innerText = new Date(q.regularMarketTime * 1000).toLocaleDateString();
-          document.getElementById('stat-open').innerText = q.regularMarketOpen ? "$" + q.regularMarketOpen.toFixed(2) : "N/A";
-          document.getElementById('stat-close').innerText = "$" + q.regularMarketPreviousClose.toFixed(2);
+          // Grab the very last item in the list (the most recent trading day)
+          const lastIndex = timestamps.length - 1;
+          const lastDate = new Date(timestamps[lastIndex] * 1000).toLocaleDateString();
+          
+          document.getElementById('stat-date').innerText = lastDate;
+          document.getElementById('stat-open').innerText = "$" + quotes.open[lastIndex].toFixed(2);
+          document.getElementById('stat-close').innerText = "$" + quotes.close[lastIndex].toFixed(2);
         } catch (err) {
-          document.getElementById('stat-date').innerText = "MARKET CLOSED";
-          document.getElementById('stat-open').innerText = "N/A";
-          document.getElementById('stat-close').innerText = "N/A";
+          document.getElementById('stat-date').innerText = "NO DATA";
         }
       }
     });
