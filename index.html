@@ -15,9 +15,8 @@
 <body class="bg-[#050505] text-emerald-400">
 
   <div class="p-8 border-b border-zinc-900">
-    <h1 class="text-white font-bold text-3xl leading-tight">
-      STOCK PRICES OPEN & CLOSE OF DAY + LIVE ORDER FLOW OF AFTER HOURS AND OVERNIGHT TRADES!
-    </h1>
+    <h1 class="text-white font-bold text-5xl">OVERNIGHT TICKER</h1>
+    <p class="text-xl text-zinc-500 uppercase tracking-widest font-bold mt-2">AFTER HOURS/OVERNIGHT LIVE STOCK FLOW 4:15pm-4:15am</p>
   </div>
 
   <div class="p-8">
@@ -46,7 +45,27 @@
   <script>
     const socket = io('https://overnight-tape.onrender.com');
     
-    // Live stream of trades
     socket.on('trade', (t) => {
       let row = document.getElementById('tape-rows').insertRow(0);
-      row.innerHTML = `<td>${new Date(t.t).toLocaleTimeString()}</td>
+      row.innerHTML = `<td>${new Date(t.t).toLocaleTimeString()}</td><td class="font-bold">${t.s}</td><td>$${t.p.toFixed(2)}</td><td>${t.v.toLocaleString()}</td>`;
+      if(document.getElementById('tape-rows').rows.length > 15) document.getElementById('tape-rows').deleteRow(15);
+    });
+
+    document.getElementById('search-box').addEventListener('keypress', async (e) => {
+      if (e.key === 'Enter') {
+        const sym = e.target.value.toUpperCase();
+        
+        // --- FIX STARTS HERE ---
+        document.getElementById('stat-date').innerText = "LOADING...";
+        document.getElementById('stat-open').innerText = "--"; 
+        document.getElementById('stat-close').innerText = "--";
+        // --- FIX ENDS HERE ---
+        
+        document.getElementById('ticker-stats').classList.remove('hidden');
+        
+        try {
+          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=1d&interval=1d`;
+          const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+          const data = await response.json();
+          const parsed = JSON.parse(data.contents);
+          const q = parsed.chart.result[0].meta;
