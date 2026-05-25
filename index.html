@@ -7,24 +7,24 @@
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <style>
     body { font-family: sans-serif; }
-    /* Larger, readable font and table sizing */
-    th, td { padding: 12px 8px; font-size: 16px; color: #a1a1aa; }
-    .header-text { font-size: 18px; }
+    /* BIG FONT SIZES */
+    th, td { padding: 16px 12px; font-size: 18px; color: #a1a1aa; }
+    .header-text { font-size: 24px; }
   </style>
 </head>
 <body class="bg-[#050505] text-emerald-400">
 
   <div class="p-6 border-b border-zinc-900">
-    <h1 class="text-white font-bold text-2xl tracking-widest">OVERNIGHT TICKER</h1>
-    <p class="text-sm text-zinc-600 uppercase tracking-widest font-bold">AFTER HOURS AND OVERNIGHT STOCK FLOW DATA</p>
+    <h1 class="text-white font-bold text-3xl tracking-widest">OVERNIGHT TICKER</h1>
+    <p class="text-lg text-zinc-600 uppercase tracking-widest font-bold">AFTER HOURS AND OVERNIGHT STOCK FLOW DATA</p>
   </div>
 
   <div class="p-6">
-    <input type="text" id="search-box" placeholder="SEARCH (e.g. AAPL, TSLA)" class="w-full bg-[#050505] border-2 border-zinc-700 p-4 text-white text-lg uppercase outline-none focus:border-emerald-500">
+    <input type="text" id="search-box" placeholder="SEARCH (e.g. AAPL, TSLA)" class="w-full bg-[#050505] border-2 border-zinc-700 p-6 text-white text-2xl uppercase outline-none focus:border-emerald-500">
   </div>
 
   <div id="ticker-stats" class="hidden px-6 mb-6">
-    <div class="flex gap-8 text-base text-zinc-400 font-bold uppercase">
+    <div class="flex gap-8 text-xl text-zinc-400 font-bold uppercase">
       <span>DATE: <span id="stat-date" class="text-emerald-500">--</span></span>
       <span>OPEN: <span id="stat-open" class="text-white">--</span></span>
       <span>CLOSE: <span id="stat-close" class="text-white">--</span></span>
@@ -48,7 +48,7 @@
     
     socket.on('trade', (t) => {
       let row = document.getElementById('tape-rows').insertRow(0);
-      row.innerHTML = `<td>${new Date(t.t).toLocaleTimeString()}</td><td class="text-white font-bold">${t.s}</td><td class="text-emerald-400">$${t.p.toFixed(2)}</td><td>${t.v.toLocaleString()}</td>`;
+      row.innerHTML = `<td class="text-lg">${new Date(t.t).toLocaleTimeString()}</td><td class="text-white font-bold text-lg">${t.s}</td><td class="text-emerald-400 text-lg">$${t.p.toFixed(2)}</td><td class="text-lg">${t.v.toLocaleString()}</td>`;
       if(document.getElementById('tape-rows').rows.length > 20) document.getElementById('tape-rows').deleteRow(20);
     });
 
@@ -59,12 +59,9 @@
         document.getElementById('stat-date').innerText = "LOADING...";
         
         try {
-          // Using a proxy to bypass the browser's security/CORS block
-          const proxy = "https://api.allorigins.win/get?url=";
-          const url = encodeURIComponent(`https://financialmodelingprep.com/api/v3/historical-price-full/${sym}?timeseries=1&apikey=${API_KEY}`);
-          const res = await fetch(proxy + url);
-          const raw = await res.json();
-          const data = JSON.parse(raw.contents);
+          const url = `https://financialmodelingprep.com/api/v3/historical-price-full/${sym}?timeseries=1&apikey=${API_KEY}`;
+          const res = await fetch(url);
+          const data = await res.json();
           
           if(data.historical && data.historical.length > 0) {
             const q = data.historical[0];
@@ -72,10 +69,10 @@
             document.getElementById('stat-open').innerText = "$" + q.open.toFixed(2);
             document.getElementById('stat-close').innerText = "$" + q.close.toFixed(2);
           } else {
-            document.getElementById('stat-date').innerText = "NO DATA FOUND";
+            document.getElementById('stat-date').innerText = "NO DATA";
           }
         } catch (err) {
-          document.getElementById('stat-date').innerText = "CONNECTION ERROR";
+          document.getElementById('stat-date').innerText = "API FAILED";
         }
       }
     });
