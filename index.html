@@ -13,7 +13,7 @@
 
   <div class="p-4 border-b border-zinc-900">
     <h1 class="text-white font-bold text-lg tracking-widest">OVERNIGHT TICKER</h1>
-    <p class="text-[9px] text-zinc-600 uppercase tracking-widest font-bold">Live Flow • Daily Stats</p>
+    <p class="text-[9px] text-zinc-600 uppercase tracking-widest font-bold">Live Flow • Real-Time Tape</p>
   </div>
 
   <div class="p-4">
@@ -22,9 +22,9 @@
 
   <div id="ticker-stats" class="hidden px-4 mb-4">
     <div class="flex gap-6 text-[10px] text-zinc-500 font-bold uppercase">
-      <span>OPEN: <span id="stat-open" class="text-white">--</span></span>
-      <span>CLOSE: <span id="stat-close" class="text-white">--</span></span>
-      <span>AH: <span id="stat-after" class="text-white">--</span></span>
+      <span>LAST: <span id="stat-last" class="text-white">--</span></span>
+      <span>HIGH: <span id="stat-high" class="text-white">--</span></span>
+      <span>LOW: <span id="stat-low" class="text-white">--</span></span>
     </div>
   </div>
 
@@ -41,32 +41,35 @@
     const socket = io('https://overnight-tape.onrender.com');
     const searchBox = document.getElementById('search-box');
     const statsBar = document.getElementById('ticker-stats');
+    
+    let currentSymbol = "";
+    let high = 0;
+    let low = 999999;
+
+    searchBox.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        currentSymbol = e.target.value.toUpperCase();
+        high = 0;
+        low = 999999;
+        statsBar.classList.remove('hidden');
+        document.getElementById('stat-last').innerText = "--";
+      }
+    });
 
     socket.on('trade', (t) => {
+      if (t.s === currentSymbol) {
+        // Update stats
+        if (t.p > high) high = t.p;
+        if (t.p < low) low = t.p;
+        document.getElementById('stat-last').innerText = t.p.toFixed(2);
+        document.getElementById('stat-high').innerText = high.toFixed(2);
+        document.getElementById('stat-low').innerText = low.toFixed(2);
+      }
+      
+      // Update tape
       let row = document.getElementById('tape-rows').insertRow(0);
       row.innerHTML = `<td class="py-2">${new Date(t.t).toLocaleTimeString()}</td><td class="text-white font-bold">${t.s}</td><td class="text-emerald-400">$${t.p.toFixed(2)}</td><td>${t.v.toLocaleString()}</td>`;
       if(document.getElementById('tape-rows').rows.length > 50) document.getElementById('tape-rows').deleteRow(50);
-    });
-
-    searchBox.addEventListener('keypress', async (e) => {
-      if (e.key === 'Enter') {
-        const sym = e.target.value.toUpperCase();
-        statsBar.classList.remove('hidden');
-        document.getElementById('stat-open').innerText = "FETCHING...";
-        
-        try {
-          // Use a public CORS proxy to ensure the browser doesn't block the request
-          const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://query2.finance.yahoo.com/v10/finance/quoteSummary/'+sym+'?modules=price')}`);
-          const data = await res.json();
-          const info = JSON.parse(data.contents).quoteSummary.result[0].price;
-          
-          document.getElementById('stat-open').innerText = info.regularMarketOpen.fmt;
-          document.getElementById('stat-close').innerText = info.previousClose.fmt;
-          document.getElementById('stat-after').innerText = info.regularMarketPrice.fmt;
-        } catch (err) {
-          document.getElementById('stat-open').innerText = "OFFLINE";
-        }
-      }
     });
   </script>
 </body>
