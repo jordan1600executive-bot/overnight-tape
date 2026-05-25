@@ -45,7 +45,7 @@
 
 
 
-  <script>
+<script>
     // Pointing directly to your live Render engine
     const socket = io('https://overnight-tape.onrender.com');
     const tableBody = document.getElementById('tape-rows');
@@ -77,39 +77,32 @@
     });
 
     searchBox.addEventListener('keypress', async (e) => {
-  if (e.key === 'Enter') {
-    const symbol = e.target.value.toUpperCase();
-    const statsBar = document.getElementById('ticker-stats');
-    
-    // 1. Show the stats bar
-    statsBar.classList.remove('hidden');
-    
-    // 2. Fetch the data
-    const to = Math.floor(Date.now() / 1000);
-    const from = to - 86400; 
-const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=60&from=${from}&to=${to}&token=d89q8dhr01qhi7rtj62g`);
-    const data = await res.json();
-    
-    // 3. Update the display with error checking
-    if(data.s === 'ok' && data.o && data.c) {
-      document.getElementById('stat-open').innerText = data.o[0].toFixed(2);
-      document.getElementById('stat-close').innerText = data.c[data.c.length - 2].toFixed(2);
-      document.getElementById('stat-after').innerText = data.c[data.c.length - 1].toFixed(2);
-    } else {
-      console.error("Ticker not found or API error.");
-    }
-  }
-});
-  }
-});
-});
-</script>
-<style>
-    /
+      if (e.key === 'Enter') {
+        const symbol = e.target.value.toUpperCase();
+        const statsBar = document.getElementById('ticker-stats');
+        
+        statsBar.classList.remove('hidden');
+        
+        const to = Math.floor(Date.now() / 1000);
+        const from = to - 86400; 
+        const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=60&from=${from}&to=${to}&token=d89q8dhr01qhi7rtj62g`);
+        const data = await res.json();
+        
+        if(data.s === 'ok' && data.o && data.c) {
+          document.getElementById('stat-open').innerText = data.o[0].toFixed(2);
+          document.getElementById('stat-close').innerText = data.c[data.c.length - 2].toFixed(2);
+          document.getElementById('stat-after').innerText = data.c[data.c.length - 1].toFixed(2);
+        } else {
+          console.error("Ticker not found or API error.");
+        }
+      }
+    });
+  </script>
+
+  <style>
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(-2px); }
       to { opacity: 1; transform: translateY(0); }
     }
-  </style>
-</body>
+  </style></body>
 </html>
