@@ -13,10 +13,11 @@
 
   <div class="p-4 border-b border-zinc-900">
     <h1 class="text-white font-bold text-lg tracking-widest">OVERNIGHT TICKER</h1>
+    <p class="text-[9px] text-zinc-600 uppercase tracking-widest font-bold">Live Flow • Overnight Stock Trade Data</p>
   </div>
 
   <div class="p-4">
-    <input type="text" id="search-box" placeholder="SEARCH TICKER..." class="w-full bg-[#050505] border border-zinc-800 p-2 text-white text-xs uppercase outline-none focus:border-emerald-500">
+    <input type="text" id="search-box" placeholder="SEARCH TICKER (e.g. AAPL, TSLA, GOOG)" class="w-full bg-[#050505] border border-zinc-800 p-2 text-white text-xs uppercase outline-none focus:border-emerald-500">
   </div>
 
   <div id="ticker-stats" class="hidden px-4 mb-4">
@@ -41,32 +42,32 @@
     const searchBox = document.getElementById('search-box');
     const statsBar = document.getElementById('ticker-stats');
 
-    // Tape logic
+    // Live Tape
     socket.on('trade', (t) => {
       let row = document.getElementById('tape-rows').insertRow(0);
       row.innerHTML = `<td class="py-2">${new Date(t.t).toLocaleTimeString()}</td><td class="text-white font-bold">${t.s}</td><td class="text-emerald-400">$${t.p.toFixed(2)}</td><td>${t.v.toLocaleString()}</td>`;
       if(document.getElementById('tape-rows').rows.length > 50) document.getElementById('tape-rows').deleteRow(50);
     });
 
-    // Stats logic
+    // Stats (Using a reliable proxy to bypass blocking)
     searchBox.addEventListener('keypress', async (e) => {
       if (e.key === 'Enter') {
         const sym = e.target.value.toUpperCase();
         statsBar.classList.remove('hidden');
-        document.getElementById('stat-open').innerText = "LOADING...";
+        document.getElementById('stat-open').innerText = "FETCHING...";
 
         try {
-          // This uses a direct, reliable Yahoo endpoint
-          const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1d`);
+          // This uses a public finance proxy (allorigins) that specifically allows browser access
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://query2.finance.yahoo.com/v10/finance/quoteSummary/'+sym+'?modules=price')}`;
+          const res = await fetch(proxyUrl);
           const data = await res.json();
-          const meta = data.chart.result[0].meta;
-          const q = data.chart.result[0].indicators.quote[0];
+          const info = JSON.parse(data.contents).quoteSummary.result[0].price;
           
-          document.getElementById('stat-open').innerText = q.open[0].toFixed(2);
-          document.getElementById('stat-close').innerText = meta.previousClose.toFixed(2);
-          document.getElementById('stat-after').innerText = meta.regularMarketPrice.toFixed(2);
+          document.getElementById('stat-open').innerText = info.regularMarketOpen.fmt;
+          document.getElementById('stat-close').innerText = info.previousClose.fmt;
+          document.getElementById('stat-after').innerText = info.regularMarketPrice.fmt;
         } catch (err) {
-          document.getElementById('stat-open').innerText = "N/A";
+          document.getElementById('stat-open').innerText = "RETRY";
         }
       }
     });
