@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OVERNIGHT STOCK DATA</title>
+  <title>OVERNIGHT TICKER</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -14,16 +14,16 @@
 <body class="bg-[#050505] text-emerald-400">
 
   <div class="p-4 border-b border-zinc-900">
-    <h1 class="text-white font-bold">OVERNIGHT TICKER</h1>
+    <h1 class="text-white font-bold text-lg tracking-widest">OVERNIGHT TICKER</h1>
     <p class="text-[9px] text-zinc-600 uppercase tracking-widest font-bold">Live Flow • Daily Stats</p>
   </div>
 
   <div class="p-4">
-    <input type="text" id="search-box" placeholder="SEARCH TICKER (GOOG, TSLA..)" class="w-full bg-[#050505] border border-zinc-800 p-2 text-white text-xs uppercase outline-none focus:border-emerald-500">
+    <input type="text" id="search-box" placeholder="SEARCH TICKER (AAPL, TSLA..)" class="w-full bg-[#050505] border border-zinc-800 p-2 text-white text-xs uppercase outline-none focus:border-emerald-500">
   </div>
 
   <div id="ticker-stats" class="hidden px-4 mb-4">
-    <div class="flex gap-4 text-[10px] text-zinc-500 font-bold uppercase">
+    <div class="flex gap-6 text-[10px] text-zinc-500 font-bold uppercase">
       <span>OPEN: <span id="stat-open" class="text-white">--</span></span>
       <span>CLOSE: <span id="stat-close" class="text-white">--</span></span>
       <span>AH: <span id="stat-after" class="text-white">--</span></span>
@@ -59,16 +59,21 @@
         document.getElementById('stat-open').innerText = "LOADING...";
         
         try {
-          const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d`);
+          const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=5d`);
           const data = await res.json();
-          const meta = data.chart.result[0].meta;
-          const q = data.chart.result[0].indicators.quote[0];
+          const result = data.chart.result[0];
+          const meta = result.meta;
+          const q = result.indicators.quote[0];
           
-          document.getElementById('stat-open').innerText = q.open[q.open.length-1].toFixed(2);
+          // Get the most recent valid day
+          const lastIdx = q.open.length - 1;
+          document.getElementById('stat-open').innerText = q.open[lastIdx].toFixed(2);
           document.getElementById('stat-close').innerText = meta.previousClose.toFixed(2);
           document.getElementById('stat-after').innerText = meta.regularMarketPrice.toFixed(2);
         } catch (err) {
           document.getElementById('stat-open').innerText = "N/A";
+          document.getElementById('stat-close').innerText = "N/A";
+          document.getElementById('stat-after').innerText = "N/A";
         }
       }
     });
