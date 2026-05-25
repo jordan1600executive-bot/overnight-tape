@@ -2,6 +2,7 @@
 <html class="bg-[#050505]">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OVERNIGHT TICKER</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -38,7 +39,9 @@
 
   <script>
     const socket = io('https://overnight-tape.onrender.com');
-    
+    const searchBox = document.getElementById('search-box');
+    const statsBar = document.getElementById('ticker-stats');
+
     // Live Tape
     socket.on('trade', (t) => {
       let row = document.getElementById('tape-rows').insertRow(0);
@@ -46,24 +49,29 @@
       if(document.getElementById('tape-rows').rows.length > 50) document.getElementById('tape-rows').deleteRow(50);
     });
 
-    // Reference Stats (Last Friday's Data)
-    document.getElementById('search-box').addEventListener('keypress', async (e) => {
+    // Stats Lookup
+    searchBox.addEventListener('keypress', async (e) => {
       if (e.key === 'Enter') {
         const sym = e.target.value.toUpperCase();
-        document.getElementById('ticker-stats').classList.remove('hidden');
-        document.getElementById('stat-date').innerText = "FETCHING...";
+        statsBar.classList.remove('hidden');
+        document.getElementById('stat-date').innerText = "LOADING...";
         
         try {
-          const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=5d`);
+          // Use proxy to avoid Yahoo block
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://query2.finance.yahoo.com/v7/finance/quote?symbols='+sym)}`;
+          const res = await fetch(proxyUrl);
           const data = await res.json();
-          const q = data.chart.result[0].indicators.quote[0];
-          const meta = data.chart.result[0].meta;
+          const q = JSON.parse(data.contents).quoteResponse.result[0];
           
-          document.getElementById('stat-date').innerText = new Date(meta.regularMarketTime * 1000).toLocaleDateString();
-          document.getElementById('stat-open').innerText = "$" + q.open[q.open.length-1].toFixed(2);
-          document.getElementById('stat-close').innerText = "$" + meta.previousClose.toFixed(2);
+          if (!q) throw new Error();
+
+          document.getElementById('stat-date').innerText = new Date(q.regularMarketTime * 1000).toLocaleDateString();
+          document.getElementById('stat-open').innerText = q.regularMarketOpen ? "$" + q.regularMarketOpen.toFixed(2) : "N/A";
+          document.getElementById('stat-close').innerText = "$" + q.regularMarketPreviousClose.toFixed(2);
         } catch (err) {
-          document.getElementById('stat-date').innerText = "NO DATA";
+          document.getElementById('stat-date').innerText = "MARKET CLOSED";
+          document.getElementById('stat-open').innerText = "N/A";
+          document.getElementById('stat-close').innerText = "N/A";
         }
       }
     });
