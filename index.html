@@ -57,7 +57,7 @@
         document.getElementById('ticker-stats').classList.remove('hidden');
         document.getElementById('stat-date').innerText = "LOADING...";
         
-        try {
+      
 // ... after const sym = ...
 // PART 1: Reset the UI immediately so the user sees "LOADING"
 document.getElementById('stat-date').innerText = "LOADING...";
@@ -79,7 +79,7 @@ try {
   // If it fails, show the error
   document.getElementById('stat-date').innerText = "CONNECTION ERROR";
 }
-        }
+        
       }
     });
   </script>
