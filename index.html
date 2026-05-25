@@ -3,29 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Overnight  Ticker | Live Tape Terminal</title>
+  <title>Overnight Ticker | Live Tape Terminal</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<meta name="google-adsense-account" content="ca-pub-1552780193760101"> </head>
+</head>
 <body class="text-emerald-400 font-['JetBrains_Mono'] select-none bg-[#050505] min-h-screen flex flex-col">
 
-  <div class="p-4 border-b border-zinc-900 bg-black/50 backdrop-blur sticky top-0 z-50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-    <div>
-      <h1 class="text-lg font-black tracking-wider text-white">OVERNIGHT TICKER</h1>
-      <p class="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Live Order Flow • Overnight Stock Trades</p>
-    </div>
-  <div id="ticker-stats" class="hidden bg-zinc-950 p-2 flex justify-center gap-6 text-zinc-400 text-xs border-b border-zinc-800">
-  <span>OPEN: <span id="stat-open" class="text-white font-bold">--</span></span>
-  <span>CLOSE: <span id="stat-close" class="text-white font-bold">--</span></span>
-  <span>AFTER-HOURS: <span id="stat-after" class="text-white font-bold">--</span></span>
-</div>
+  <div class="p-4 border-b border-zinc-900 bg-black/50 backdrop-blur sticky top-0 z-50">
+    <h1 class="text-lg font-black tracking-wider text-white">OVERNIGHT TICKER</h1>
+    <p class="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Live Order Flow • Overnight Stock Trades</p>
+  </div>
 
-</div>
+  <div class="p-4">
     <div class="w-full sm:w-auto flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded px-3 py-1.5 focus-within:border-emerald-500 transition-colors">
       <svg class="w-4 h-4 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-      <input type="text" id="search-box" placeholder="Search Stock Ticker (GOOG, TSLA..)" class="bg-transparent text-white text-xs focus:outline-none uppercase w-full sm:w-48 placeholder-zinc-600 font-bold tracking-wide">
+      <input type="text" id="search-box" placeholder="Search Stock Ticker (AAPL, TSLA..)" class="bg-transparent text-white text-xs focus:outline-none uppercase w-full sm:w-48 placeholder-zinc-600 font-bold tracking-wide">
     </div>
+  </div>
+
+  <div id="ticker-stats" class="hidden bg-zinc-950 p-3 mx-4 mb-4 flex justify-center gap-6 text-zinc-400 text-xs border border-zinc-800 rounded">
+    <span>OPEN: <span id="stat-open" class="text-white font-bold">--</span></span>
+    <span>CLOSE: <span id="stat-close" class="text-white font-bold">--</span></span>
+    <span>AFTER-HOURS: <span id="stat-after" class="text-white font-bold">--</span></span>
   </div>
 
   <div class="flex-1 overflow-x-auto">
@@ -38,49 +38,34 @@
           <th>SIZE</th>
         </tr>
       </thead>
-      <tbody id="tape-rows" class="text-xs divide-y divide-zinc-950">
-        </tbody>
+      <tbody id="tape-rows" class="text-xs divide-y divide-zinc-950"></tbody>
     </table>
-  </div> 
+  </div>
 
-
-
-<script>
-    // Pointing directly to your live Render engine
+  <script>
     const socket = io('https://overnight-tape.onrender.com');
     const tableBody = document.getElementById('tape-rows');
     const searchBox = document.getElementById('search-box');
+    const statsBar = document.getElementById('ticker-stats');
 
     socket.on('trade', (t) => {
       let row = tableBody.insertRow(0);
-      row.className = "hover:bg-zinc-950/40 transition-colors duration-75 data-row opacity-0";
+      row.className = "hover:bg-zinc-950/40 transition-colors duration-75 opacity-0";
       row.style.animation = "fadeIn 0.2s forwards";
-      row.setAttribute('data-symbol', t.s.toUpperCase());
       
       const timeStr = new Date(t.t).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-      
       row.innerHTML = `
-        <td class="p-3 text-zinc-600 font-medium">${timeStr}</td>
-        <td class="font-bold text-slate-100 tracking-wide">${t.s}</td>
-        <td class="text-emerald-400 font-semibold">$${t.p.toFixed(2)}</td>
-        <td class="text-zinc-400 font-medium">${t.v.toLocaleString()}</td>
+        <td class="p-3 text-zinc-600">${timeStr}</td>
+        <td class="font-bold text-slate-100">${t.s}</td>
+        <td class="text-emerald-400">$${t.p.toFixed(2)}</td>
+        <td class="text-zinc-400">${t.v.toLocaleString()}</td>
       `;
-
-      const currentQuery = searchBox.value.trim().toUpperCase();
-      if (currentQuery && t.s.toUpperCase() !== currentQuery) {
-        row.classList.add('hidden');
-      }
-
-      if(tableBody.rows.length > 50) {
-        tableBody.deleteRow(50);
-      }
+      if(tableBody.rows.length > 50) tableBody.deleteRow(50);
     });
 
     searchBox.addEventListener('keypress', async (e) => {
       if (e.key === 'Enter') {
         const symbol = e.target.value.toUpperCase();
-        const statsBar = document.getElementById('ticker-stats');
-        
         statsBar.classList.remove('hidden');
         
         const to = Math.floor(Date.now() / 1000);
@@ -88,21 +73,17 @@
         const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=60&from=${from}&to=${to}&token=d89q8dhr01qhi7rtj62g`);
         const data = await res.json();
         
-        if(data.s === 'ok' && data.o && data.c) {
+        if(data.s === 'ok' && data.c) {
           document.getElementById('stat-open').innerText = data.o[0].toFixed(2);
           document.getElementById('stat-close').innerText = data.c[data.c.length - 2].toFixed(2);
           document.getElementById('stat-after').innerText = data.c[data.c.length - 1].toFixed(2);
-        } else {
-          console.error("Ticker not found or API error.");
         }
       }
     });
   </script>
 
   <style>
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-2px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-  </style></body>
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-2px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</body>
 </html>
