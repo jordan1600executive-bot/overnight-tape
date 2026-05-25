@@ -54,14 +54,8 @@
     document.getElementById('search-box').addEventListener('keypress', async (e) => {
       if (e.key === 'Enter') {
         const sym = e.target.value.toUpperCase();
-        
-        // --- FIX STARTS HERE ---
-        document.getElementById('stat-date').innerText = "LOADING...";
-        document.getElementById('stat-open').innerText = "--"; 
-        document.getElementById('stat-close').innerText = "--";
-        // --- FIX ENDS HERE ---
-        
         document.getElementById('ticker-stats').classList.remove('hidden');
+        document.getElementById('stat-date').innerText = "LOADING...";
         
         try {
           const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=1d&interval=1d`;
@@ -69,3 +63,15 @@
           const data = await response.json();
           const parsed = JSON.parse(data.contents);
           const q = parsed.chart.result[0].meta;
+          
+          document.getElementById('stat-date').innerText = new Date(q.regularMarketTime * 1000).toLocaleDateString();
+          document.getElementById('stat-open').innerText = "$" + q.regularMarketPrice.toFixed(2);
+          document.getElementById('stat-close').innerText = "$" + q.chartPreviousClose.toFixed(2);
+        } catch (err) {
+          document.getElementById('stat-date').innerText = "CONNECTION ERROR";
+        }
+      }
+    });
+  </script>
+</body>
+</html>
