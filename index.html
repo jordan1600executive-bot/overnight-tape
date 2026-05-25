@@ -85,7 +85,21 @@
           row.classList.add('hidden');
         }
       }
-    });
+    });// New Search Logic for Stats Bar
+searchBox.addEventListener('keypress', async (e) => {
+  if (e.key === 'Enter') {
+    const symbol = e.target.value.toUpperCase();
+    const statsBar = document.getElementById('ticker-stats');
+    statsBar.classList.remove('hidden');
+    
+    // IMPORTANT: Replace YOUR_FINNHUB_KEY with your actual key from finnhub.io
+    const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=YOUR_FINNHUB_KEY`);
+    const data = await res.json();
+    
+    document.getElementById('stat-open').innerText = data.o ? data.o : '--';
+    document.getElementById('stat-close').innerText = data.pc ? data.pc : '--';
+  }
+});
   </script>
 
   <style>
