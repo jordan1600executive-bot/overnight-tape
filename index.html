@@ -93,7 +93,7 @@ searchBox.addEventListener('keypress', async (e) => {
     statsBar.classList.remove('hidden');
     
     // IMPORTANT: Replace YOUR_FINNHUB_KEY with your actual key from finnhub.io
-    const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=YOUR_FINNHUB_KEY`);
+    const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=d89q8dhr01qhi7rtj620d89q8dhr01qhi7rtj62g`);
     const data = await res.json();
     
     document.getElementById('stat-open').innerText = data.o ? data.o : '--';
