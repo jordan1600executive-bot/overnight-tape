@@ -20,7 +20,7 @@
   </div>
 
   <div class="p-3">
-    <input type="text" id="search-box" placeholder="SEARCH TICKER..." class="w-full bg-[#050505] border border-zinc-800 p-2 text-white text-[10px] uppercase outline-none focus:border-emerald-500">
+    <input type="text" id="search-box" placeholder="SEARCH TICKER (e.g. AAPL, TSLA, GOOG...)" class="w-full bg-[#050505] border border-zinc-800 p-2 text-white text-[10px] uppercase outline-none focus:border-emerald-500">
   </div>
 
   <div id="ticker-stats" class="hidden px-4 mb-3">
@@ -55,25 +55,26 @@
       if (e.key === 'Enter') {
         const sym = e.target.value.toUpperCase();
         document.getElementById('ticker-stats').classList.remove('hidden');
-        document.getElementById('stat-date').innerText = "FETCHING...";
+        document.getElementById('stat-date').innerText = "LOADING...";
         
         try {
-          // Changed to 'chart' endpoint which reliably fetches the last available trading day
+          // Fetches the most recent 5 days of data
           const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=5d&interval=1d`);
           const data = await res.json();
           const result = data.chart.result[0];
           const quotes = result.indicators.quote[0];
           const timestamps = result.timestamp;
           
-          // Grab the very last item in the list (the most recent trading day)
+          // Force the last available index (Friday)
           const lastIndex = timestamps.length - 1;
-          const lastDate = new Date(timestamps[lastIndex] * 1000).toLocaleDateString();
           
-          document.getElementById('stat-date').innerText = lastDate;
+          document.getElementById('stat-date').innerText = new Date(timestamps[lastIndex] * 1000).toLocaleDateString();
           document.getElementById('stat-open').innerText = "$" + quotes.open[lastIndex].toFixed(2);
           document.getElementById('stat-close').innerText = "$" + quotes.close[lastIndex].toFixed(2);
         } catch (err) {
-          document.getElementById('stat-date').innerText = "NO DATA";
+          document.getElementById('stat-date').innerText = "ERROR";
+          document.getElementById('stat-open').innerText = "N/A";
+          document.getElementById('stat-close').innerText = "N/A";
         }
       }
     });
