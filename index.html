@@ -20,7 +20,7 @@
   </div>
 
   <div class="p-3">
-    <input type="text" id="search-box" placeholder="SEARCH TICKER (e.g. AAPL, TSLA, GOOG...)" class="w-full bg-[#050505] border border-zinc-800 p-2 text-white text-[10px] uppercase outline-none focus:border-emerald-500">
+    <input type="text" id="search-box" placeholder="SEARCH TICKER (e.g. AAPL, TSLA)" class="w-full bg-[#050505] border border-zinc-800 p-2 text-white text-[10px] uppercase outline-none focus:border-emerald-500">
   </div>
 
   <div id="ticker-stats" class="hidden px-4 mb-3">
@@ -43,14 +43,17 @@
   </div>
 
   <script>
+    const API_KEY = "bPCP1oc0Ta1IZy1w74l7VlaOM582eO0i";
     const socket = io('https://overnight-tape.onrender.com');
     
+    // Live Tape
     socket.on('trade', (t) => {
       let row = document.getElementById('tape-rows').insertRow(0);
-      row.innerHTML = `<td class="py-1 truncate">${new Date(t.t).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</td><td class="text-white font-bold truncate">${t.s}</td><td class="text-emerald-400 truncate">$${t.p.toFixed(2)}</td><td class="truncate">${t.v.toLocaleString()}</td>`;
+      row.innerHTML = `<td class="py-1 truncate">${new Date(t.t).toLocaleTimeString()}</td><td class="text-white font-bold truncate">${t.s}</td><td class="text-emerald-400 truncate">$${t.p.toFixed(2)}</td><td class="truncate">${t.v.toLocaleString()}</td>`;
       if(document.getElementById('tape-rows').rows.length > 50) document.getElementById('tape-rows').deleteRow(50);
     });
 
+    // FMP Data Fetch
     document.getElementById('search-box').addEventListener('keypress', async (e) => {
       if (e.key === 'Enter') {
         const sym = e.target.value.toUpperCase();
@@ -58,23 +61,15 @@
         document.getElementById('stat-date').innerText = "LOADING...";
         
         try {
-          // PROXY URL FIX: Bypasses the Browser Security Error
-          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=5d&interval=1d`;
-          const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-          const res = await fetch(proxy);
+          const res = await fetch(`https://financialmodelingprep.com/api/v3/historical-price-full/${sym}?timeseries=1&apikey=${API_KEY}`);
           const data = await res.json();
-          const result = JSON.parse(data.contents).chart.result[0];
-          const quotes = result.indicators.quote[0];
-          const timestamps = result.timestamp;
-          const lastIndex = timestamps.length - 1;
+          const q = data.historical[0];
           
-          document.getElementById('stat-date').innerText = new Date(timestamps[lastIndex] * 1000).toLocaleDateString();
-          document.getElementById('stat-open').innerText = "$" + quotes.open[lastIndex].toFixed(2);
-          document.getElementById('stat-close').innerText = "$" + quotes.close[lastIndex].toFixed(2);
+          document.getElementById('stat-date').innerText = q.date;
+          document.getElementById('stat-open').innerText = "$" + q.open.toFixed(2);
+          document.getElementById('stat-close').innerText = "$" + q.close.toFixed(2);
         } catch (err) {
-          document.getElementById('stat-date').innerText = "DATA ERROR";
-          document.getElementById('stat-open').innerText = "N/A";
-          document.getElementById('stat-close').innerText = "N/A";
+          document.getElementById('stat-date').innerText = "ERROR";
         }
       }
     });
