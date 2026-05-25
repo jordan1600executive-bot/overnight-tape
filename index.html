@@ -58,21 +58,21 @@
         document.getElementById('stat-date').innerText = "LOADING...";
         
         try {
-          // Fetches the most recent 5 days of data
-          const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=5d&interval=1d`);
+          // PROXY URL FIX: Bypasses the Browser Security Error
+          const url = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}?range=5d&interval=1d`;
+          const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+          const res = await fetch(proxy);
           const data = await res.json();
-          const result = data.chart.result[0];
+          const result = JSON.parse(data.contents).chart.result[0];
           const quotes = result.indicators.quote[0];
           const timestamps = result.timestamp;
-          
-          // Force the last available index (Friday)
           const lastIndex = timestamps.length - 1;
           
           document.getElementById('stat-date').innerText = new Date(timestamps[lastIndex] * 1000).toLocaleDateString();
           document.getElementById('stat-open').innerText = "$" + quotes.open[lastIndex].toFixed(2);
           document.getElementById('stat-close').innerText = "$" + quotes.close[lastIndex].toFixed(2);
         } catch (err) {
-          document.getElementById('stat-date').innerText = "ERROR";
+          document.getElementById('stat-date').innerText = "DATA ERROR";
           document.getElementById('stat-open').innerText = "N/A";
           document.getElementById('stat-close').innerText = "N/A";
         }
