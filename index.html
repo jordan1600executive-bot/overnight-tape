@@ -76,32 +76,30 @@
       }
     });
 
-    searchBox.addEventListener('input', () => {
-      const query = searchBox.value.trim().toUpperCase();
-      const rows = tableBody.getElementsByClassName('data-row');
-      
-      for (let row of rows) {
-        const symbol = row.getAttribute('data-symbol');
-        if (!query || symbol === query) {
-          row.classList.remove('hidden');
-        } else {
-          row.classList.add('hidden');
-        }
-      }
-    });//
     searchBox.addEventListener('keypress', async (e) => {
   if (e.key === 'Enter') {
     const symbol = e.target.value.toUpperCase();
-    document.getElementById('ticker-stats').classList.remove('hidden');
+    const statsBar = document.getElementById('ticker-stats');
+    
+    // 1. Show the stats bar
+    statsBar.classList.remove('hidden');
+    
+    // 2. Fetch the data
     const to = Math.floor(Date.now() / 1000);
     const from = to - 86400; 
     const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=60&from=${from}&to=${to}&token=d89q8dhr01qhi7rtj620d89q8dhr01qhi7rtj62g`);
     const data = await res.json();
-    if(data.s === 'ok') {
-      document.getElementById('stat-open').innerText = data.o[0];
-      document.getElementById('stat-close').innerText = data.c[data.c.length - 2];
-      document.getElementById('stat-after').innerText = data.c[data.c.length - 1];
+    
+    // 3. Update the display with error checking
+    if(data.s === 'ok' && data.o && data.c) {
+      document.getElementById('stat-open').innerText = data.o[0].toFixed(2);
+      document.getElementById('stat-close').innerText = data.c[data.c.length - 2].toFixed(2);
+      document.getElementById('stat-after').innerText = data.c[data.c.length - 1].toFixed(2);
+    } else {
+      console.error("Ticker not found or API error.");
     }
+  }
+});
   }
 });
 });
