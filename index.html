@@ -6,54 +6,52 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <style>body { font-family: 'JetBrains Mono', monospace; }</style>
+  <style>
+    body { font-family: 'JetBrains Mono', monospace; }
+  </style>
 </head>
 <body class="bg-[#050505] text-emerald-400 min-h-screen">
 
   <div class="p-4 border-b border-zinc-900">
-    <h1 class="text-white font-bold tracking-widest text-lg">OVERNIGHT TICKER</h1>
-    <p class="text-[9px] text-zinc-600 uppercase tracking-widest font-bold">Live Flow • Daily Stats</p>
+    <h1 class="text-white font-bold text-lg">OVERNIGHT TICKER</h1>
+    <p class="text-[9px] text-zinc-600 uppercase tracking-widest font-bold">Live Flow • Overnight Stock Trades</p>
   </div>
 
   <div class="p-4">
-    <div class="border border-zinc-800 bg-zinc-950 p-2 rounded">
-      <input type="text" id="search-box" placeholder="SEARCH TICKER (AAPL, TSLA..)" class="w-full bg-transparent text-white text-xs outline-none uppercase placeholder-zinc-700">
+    <input type="text" id="search-box" placeholder="SEARCH TICKER (AAPL, TSLA..)" class="w-full bg-[#050505] border border-zinc-800 p-2 text-white text-xs uppercase outline-none focus:border-emerald-500">
+  </div>
+
+  <div id="ticker-stats" class="hidden px-4 mb-4">
+    <div class="flex gap-6 text-[10px] text-zinc-500 font-bold">
+      <span>OPEN: <span id="stat-open" class="text-white">--</span></span>
+      <span>CLOSE: <span id="stat-close" class="text-white">--</span></span>
+      <span>AFTER: <span id="stat-after" class="text-white">--</span></span>
     </div>
   </div>
 
-  <div id="ticker-stats" class="hidden p-4 mx-4 mb-4 border border-zinc-800 bg-black rounded">
-    <div class="flex justify-between text-[10px] text-zinc-500 uppercase">
-      <span>OPEN: <span id="stat-open" class="text-white font-bold">--</span></span>
-      <span>CLOSE: <span id="stat-close" class="text-white font-bold">--</span></span>
-      <span>AH: <span id="stat-after" class="text-white font-bold">--</span></span>
-    </div>
-  </div>
-
-  <div class="flex-1 overflow-x-auto">
-    <table class="w-full text-left text-xs"><tbody id="tape-rows"></tbody></table>
-  </div>
+  <table class="w-full text-left text-xs">
+    <tbody id="tape-rows"></tbody>
+  </table>
 
   <script>
     const socket = io('https://overnight-tape.onrender.com');
     const searchBox = document.getElementById('search-box');
     const statsBar = document.getElementById('ticker-stats');
-    const POLYGON_KEY = 'YOUR_NEW_POLYGON_KEY'; // PASTE NEW KEY HERE
+    const POLYGON_KEY = 'YOUR_NEW_POLYGON_KEY';
 
     socket.on('trade', (t) => {
       let row = document.getElementById('tape-rows').insertRow(0);
       row.innerHTML = `<td class="p-2 text-zinc-600">${new Date(t.t).toLocaleTimeString()}</td><td class="text-white font-bold">${t.s}</td><td class="text-emerald-400">$${t.p.toFixed(2)}</td>`;
-      if(document.getElementById('tape-rows').rows.length > 30) document.getElementById('tape-rows').deleteRow(30);
+      if(document.getElementById('tape-rows').rows.length > 50) document.getElementById('tape-rows').deleteRow(50);
     });
 
     searchBox.addEventListener('keypress', async (e) => {
       if (e.key === 'Enter') {
         const sym = e.target.value.toUpperCase();
-        
-        // CHECK CACHE FIRST (Avoids hitting API limit)
         const cached = localStorage.getItem(`cache_${sym}`);
+        
         if (cached) {
-          const data = JSON.parse(cached);
-          displayStats(data);
+          updateDisplay(JSON.parse(cached));
           return;
         }
 
@@ -66,8 +64,8 @@
           const res = await fetch(`https://api.polygon.io/v1/open-close/${sym}/${dateStr}?adjusted=true&apiKey=${POLYGON_KEY}`);
           const data = await res.json();
           if(data.status === 'OK') {
-            localStorage.setItem(`cache_${sym}`, JSON.stringify(data)); // SAVE TO CACHE
-            displayStats(data);
+            localStorage.setItem(`cache_${sym}`, JSON.stringify(data));
+            updateDisplay(data);
           } else {
             document.getElementById('stat-open').innerText = "LIMIT";
           }
@@ -75,11 +73,11 @@
       }
     });
 
-    function displayStats(data) {
+    function updateDisplay(d) {
       statsBar.classList.remove('hidden');
-      document.getElementById('stat-open').innerText = data.open.toFixed(2);
-      document.getElementById('stat-close').innerText = data.close.toFixed(2);
-      document.getElementById('stat-after').innerText = data.afterHours ? data.afterHours.toFixed(2) : "0.00";
+      document.getElementById('stat-open').innerText = d.open.toFixed(2);
+      document.getElementById('stat-close').innerText = d.close.toFixed(2);
+      document.getElementById('stat-after').innerText = d.afterHours ? d.afterHours.toFixed(2) : "0.00";
     }
   </script>
 </body>
