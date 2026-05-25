@@ -69,7 +69,7 @@
           document.getElementById('stat-open').innerText = "$" + q.regularMarketPrice.toFixed(2);
           document.getElementById('stat-close').innerText = "$" + q.chartPreviousClose.toFixed(2);
         } catch (err) {
-          document.getElementById('stat-date').innerText = "CONNECTION ERROR";
+          document.getElementById('stat-date').innerText = "ERROR";
         }
       }
     });
