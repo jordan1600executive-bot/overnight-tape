@@ -70,6 +70,8 @@
           document.getElementById('stat-open').innerText = data.o[lastIndex].toFixed(2);
           document.getElementById('stat-close').innerText = data.c[lastIndex - 1] ? data.c[lastIndex - 1].toFixed(2) : "N/A";
           document.getElementById('stat-after').innerText = data.c[lastIndex].toFixed(2);
+        } else {
+            console.log("No data returned for:", symbol);
         }
       }
     });
