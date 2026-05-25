@@ -7,9 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    body { font-family: 'JetBrains Mono', monospace; }
-  </style>
+  <style>body { font-family: 'JetBrains Mono', monospace; }</style>
 </head>
 <body class="bg-[#050505] text-emerald-400">
 
@@ -19,7 +17,7 @@
   </div>
 
   <div class="p-4">
-    <input type="text" id="search-box" placeholder="SEARCH TICKER (AAPL, TSLA..)" class="w-full bg-[#050505] border border-zinc-800 p-2 text-white text-xs uppercase outline-none focus:border-emerald-500">
+    <input type="text" id="search-box" placeholder="TYPE TICKER & ENTER" class="w-full bg-[#050505] border border-zinc-800 p-2 text-white text-xs uppercase outline-none focus:border-emerald-500">
   </div>
 
   <div id="ticker-stats" class="hidden px-4 mb-4">
@@ -33,9 +31,7 @@
   <div class="px-4">
     <table class="w-full text-left text-xs text-zinc-400">
       <thead>
-        <tr class="border-b border-zinc-900">
-          <th class="py-2">TIME</th><th>SYMBOL</th><th>PRICE</th><th>SIZE</th>
-        </tr>
+        <tr class="border-b border-zinc-900"><th class="py-2">TIME</th><th>SYMBOL</th><th>PRICE</th><th>SIZE</th></tr>
       </thead>
       <tbody id="tape-rows" class="text-emerald-400"></tbody>
     </table>
@@ -56,24 +52,19 @@
       if (e.key === 'Enter') {
         const sym = e.target.value.toUpperCase();
         statsBar.classList.remove('hidden');
-        document.getElementById('stat-open').innerText = "LOADING...";
+        document.getElementById('stat-open').innerText = "FETCHING...";
         
         try {
-          const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=5d`);
+          // Use a public CORS proxy to ensure the browser doesn't block the request
+          const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://query2.finance.yahoo.com/v10/finance/quoteSummary/'+sym+'?modules=price')}`);
           const data = await res.json();
-          const result = data.chart.result[0];
-          const meta = result.meta;
-          const q = result.indicators.quote[0];
+          const info = JSON.parse(data.contents).quoteSummary.result[0].price;
           
-          // Get the most recent valid day
-          const lastIdx = q.open.length - 1;
-          document.getElementById('stat-open').innerText = q.open[lastIdx].toFixed(2);
-          document.getElementById('stat-close').innerText = meta.previousClose.toFixed(2);
-          document.getElementById('stat-after').innerText = meta.regularMarketPrice.toFixed(2);
+          document.getElementById('stat-open').innerText = info.regularMarketOpen.fmt;
+          document.getElementById('stat-close').innerText = info.previousClose.fmt;
+          document.getElementById('stat-after').innerText = info.regularMarketPrice.fmt;
         } catch (err) {
-          document.getElementById('stat-open').innerText = "N/A";
-          document.getElementById('stat-close').innerText = "N/A";
-          document.getElementById('stat-after').innerText = "N/A";
+          document.getElementById('stat-open').innerText = "OFFLINE";
         }
       }
     });
