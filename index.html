@@ -3,85 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Overnight Ticker | Live Tape Terminal</title>
+  <title>Ticker</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
-<body class="text-emerald-400 font-['JetBrains_Mono'] select-none bg-[#050505] min-h-screen flex flex-col">
-
-  <div class="p-4 border-b border-zinc-900 bg-black/50 backdrop-blur sticky top-0 z-50">
-    <h1 class="text-lg font-black tracking-wider text-white">OVERNIGHT TICKER</h1>
-    <p class="text-[9px] text-zinc-500 uppercase tracking-widest font-bold">Live Order Flow • Overnight Stock Trades</p>
+<body class="bg-[#050505] text-emerald-400 font-mono">
+  <div class="p-4 border-b border-zinc-900">
+    <h1 class="text-white font-bold">OVERNIGHT TICKER</h1>
   </div>
 
   <div class="p-4">
-    <div class="w-full sm:w-auto flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded px-3 py-1.5 focus-within:border-emerald-500 transition-colors">
-      <input type="text" id="search-box" placeholder="Search Ticker (AAPL, TSLA..)" class="bg-transparent text-white text-xs focus:outline-none uppercase w-full sm:w-48 placeholder-zinc-600 font-bold tracking-wide">
-    </div>
+    <input type="text" id="search-box" placeholder="TYPE TICKER & ENTER" class="w-full bg-zinc-900 text-white p-2 rounded uppercase">
   </div>
 
-  <div id="ticker-stats" class="hidden bg-zinc-950 p-3 mx-4 mb-4 border border-zinc-800 rounded">
-    <div class="text-center mb-2 text-[10px] text-zinc-500 uppercase tracking-widest" id="stat-date">DATE: LOADING...</div>
-    <div class="flex justify-center gap-6 text-zinc-400 text-xs">
-      <span>OPEN: <span id="stat-open" class="text-white font-bold">--</span></span>
-      <span>CLOSE: <span id="stat-close" class="text-white font-bold">--</span></span>
-      <span>AFTER: <span id="stat-after" class="text-white font-bold">--</span></span>
+  <div id="stats" class="hidden p-4 bg-zinc-950 text-xs border border-zinc-800 mx-4 rounded">
+    <div id="date-display" class="text-zinc-500 mb-2">DATE: --</div>
+    <div class="flex gap-4 text-white">
+      <span>OPEN: <span id="val-open">--</span></span>
+      <span>CLOSE: <span id="val-close">--</span></span>
+      <span>AH: <span id="val-ah">--</span></span>
     </div>
-  </div>
-
-  <div class="flex-1 overflow-x-auto">
-    <table class="w-full text-left border-collapse">
-      <thead>
-        <tr class="text-zinc-600 border-b border-zinc-900 bg-zinc-950/50 text-[10px] uppercase tracking-wider font-bold">
-          <th class="p-3">TIME</th><th>SYMBOL</th><th>PRICE</th><th>SIZE</th>
-        </tr>
-      </thead>
-      <tbody id="tape-rows" class="text-xs divide-y divide-zinc-950"></tbody>
-    </table>
   </div>
 
   <script>
-    const socket = io('https://overnight-tape.onrender.com');
-    const tableBody = document.getElementById('tape-rows');
     const searchBox = document.getElementById('search-box');
-    const statsBar = document.getElementById('ticker-stats');
+    const statsDiv = document.getElementById('stats');
 
-    // Live Trades
-    socket.on('trade', (t) => {
-      let row = tableBody.insertRow(0);
-      row.innerHTML = `<td class="p-3 text-zinc-600">${new Date(t.t).toLocaleTimeString()}</td><td class="font-bold text-slate-100">${t.s}</td><td class="text-emerald-400">$${t.p.toFixed(2)}</td><td class="text-zinc-400">${t.v.toLocaleString()}</td>`;
-      if(tableBody.rows.length > 50) tableBody.deleteRow(50);
-    });
-
-    // Search Logic
     searchBox.addEventListener('keypress', async (e) => {
       if (e.key === 'Enter') {
-        const symbol = e.target.value.toUpperCase();
-        statsBar.classList.remove('hidden');
-        document.getElementById('stat-open').innerText = "---";
-        document.getElementById('stat-close').innerText = "---";
-        document.getElementById('stat-after').innerText = "---";
+        const sym = e.target.value.toUpperCase();
+        statsDiv.classList.remove('hidden');
+        document.getElementById('date-display').innerText = "LOADING...";
         
         try {
           const to = Math.floor(Date.now() / 1000);
-          const from = to - (86400 * 7); 
-          const res = await fetch(`https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=D&from=${from}&to=${to}&token=d89q8dhr01qhi7rtj62g`);
+          const from = to - (86400 * 7);
+          const url = `https://finnhub.io/api/v1/stock/candle?symbol=${sym}&resolution=D&from=${from}&to=${to}&token=d89q8dhr01qhi7rtj62g`;
+          
+          const res = await fetch(url);
           const data = await res.json();
           
-          if(data.s === 'ok' && data.t && data.t.length > 0) {
-            const idx = data.t.length - 1;
-            const date = new Date(data.t[idx] * 1000).toLocaleDateString(undefined, {month:'long', day:'numeric'});
-            
-            document.getElementById('stat-date').innerText = "DATE: " + date;
-            document.getElementById('stat-open').innerText = data.o[idx].toFixed(2);
-            document.getElementById('stat-close').innerText = data.c[idx-1] ? data.c[idx-1].toFixed(2) : "N/A";
-            document.getElementById('stat-after').innerText = data.c[idx].toFixed(2);
+          if(data.s === 'ok') {
+            const i = data.c.length - 1;
+            document.getElementById('date-display').innerText = "DATE: " + new Date(data.t[i] * 1000).toLocaleDateString();
+            document.getElementById('val-open').innerText = data.o[i].toFixed(2);
+            document.getElementById('val-close').innerText = data.c[i-1].toFixed(2);
+            document.getElementById('val-ah').innerText = data.c[i].toFixed(2);
           } else {
-            document.getElementById('stat-date').innerText = "NO DATA FOUND";
+            document.getElementById('date-display').innerText = "ERROR: NO DATA";
           }
         } catch (err) {
-          document.getElementById('stat-date').innerText = "ERROR LOADING";
+          document.getElementById('date-display').innerText = "ERROR: CONNECTION FAILED";
         }
       }
     });
