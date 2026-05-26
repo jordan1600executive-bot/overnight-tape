@@ -1,82 +1,34 @@
 <!DOCTYPE html>
-<html class="bg-[#050505]">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>OVERNIGHT TICKER</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <style>
-    body { font-family: sans-serif; }
-    th, td { padding: 20px; font-size: 24px; color: #fff; }
-    input { font-size: 28px !important; padding: 20px !important; }
-  </style>
 </head>
-<body class="bg-[#050505] text-emerald-400">
+<body class="bg-[#050505] text-white">
 
-  <div class="p-8 border-b border-zinc-900">
-    <h1 class="text-white font-bold text-5xl">OVERNIGHT TICKER</h1>
-    <p class="text-xl text-white uppercase tracking-widest font-bold mt-2">Day Open/Close Price + AFTER HOURS/OVERNIGHT LIVE TRADE DATA 4:15pm-4:15am</p>
-  </div>
-
-  <div class="p-8">
-    <input type="text" id="search-box" placeholder="SEARCH TICKER (e.g. AAPL, TSLA)" class="w-full bg-[#050505] border-4 border-zinc-700 text-white uppercase outline-none focus:border-emerald-500">
-  </div>
-
-  <div id="ticker-stats" class="hidden px-8 mb-8 text-3xl font-bold">
-    <div class="flex gap-12 text-zinc-400 uppercase">
-      <span>DATE: <span id="stat-date" class="text-emerald-500">--</span></span>
-      <span>OPEN: <span id="stat-open" class="text-white">--</span></span>
-      <span>CLOSE: <span id="stat-close" class="text-white">--</span></span>
-    </div>
-  </div>
-
-  <div class="px-4">
-    <table class="w-full text-left">
-      <thead>
-        <tr class="border-b-4 border-zinc-800 text-zinc-500 text-2xl">
-          <th>TIME</th><th>STOCK</th><th>PRICE</th><th>SIZE</th>
-        </tr>
-      </thead>
-      <tbody id="tape-rows"></tbody>
-    </table>
-  </div>
+  <input type="text" id="search-box" class="w-full bg-zinc-900 p-8 text-3xl">
+  <table class="w-full text-left">
+    <tbody id="tape-rows"></tbody>
+  </table>
 
   <script>
     const socket = io('https://overnight-tape.onrender.com');
     
     socket.on('trade', (t) => {
       let row = document.getElementById('tape-rows').insertRow(0);
-      row.innerHTML = `<td>${new Date(t.t).toLocaleTimeString()}</td><td class="font-bold">${t.s}</td><td>$${t.p.toFixed(2)}</td><td>${t.v.toLocaleString()}</td>`;
-      if(document.getElementById('tape-rows').rows.length > 15) document.getElementById('tape-rows').deleteRow(15);
+      row.innerHTML = `<td>${t.t}</td><td>${t.s}</td><td>${t.p}</td><td>${t.v}</td>`;
     });
 
     document.getElementById('search-box').addEventListener('keypress', async (e) => {
       if (e.key === 'Enter') {
         const sym = e.target.value.toUpperCase();
-        document.getElementById('ticker-stats').classList.remove('hidden');
-        
-        document.getElementById('stat-date').innerText = "LOADING...";
-        document.getElementById('stat-open').innerText = "--";
-        document.getElementById('stat-close').innerText = "--";
-        document.getElementById('tape-rows').innerHTML = ""; 
-
-        try {
-          const response = await fetch(`https://my-stock-proxy.onrender.com/stock/${sym}`);
-          if (!response.ok) throw new Error("Proxy error");
-          
-          const data = await response.json();
-          const q = data.chart?.result?.[0]?.meta;
-          
-          if (!q) throw new Error("Data missing");
-
-          // 1. Set Date
-          document.getElementById('stat-date').innerText = new Date(q.regularMarketTime * 1000).toLocaleDateString(undefined, {
-            month: 'numeric', day: 'numeric', year: '2-digit'
-          });
-
-          // 2. Set Open Price
-          document.getElementById('stat-open').innerText = "$" + (q.regularMarketOpen || 0).toFixed(2);
-
-          // 3. Set Close Price (or -- if open)
-          const now = Date.now() / 1000;
-          const isMarketOpen = q.currentTradingPeriod?.
+        // Just testing the fetch connection
+        const response = await fetch(`https://my-stock-proxy.onrender.com/stock/${sym}`);
+        const data = await response.json();
+        console.log("TESTING DATA:", data);
+        alert("Check console for data!");
+      }
+    });
+  </script>
+</body>
+</html>
