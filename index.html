@@ -60,18 +60,36 @@
         document.getElementById('stat-close').innerText = "--";
         document.getElementById('tape-rows').innerHTML = ""; 
 
-        try {
+       try {
           const response = await fetch(`https://my-stock-proxy.onrender.com/stock/${sym}`);
           const data = await response.json();
           const q = data.chart.result[0].meta;
           
-          document.getElementById('stat-date').innerText = new Date(q.regularMarketTime * 1000).toLocaleDateString();
-          document.getElementById('stat-open').innerText = "$" + q.regularMarketPrice.toFixed(2);
-          document.getElementById('stat-close').innerText = "$" + q.chartPreviousClose.toFixed(2);
+          // 1. Set the Date
+          document.getElementById('stat-date').innerText = new Date(q.regularMarketTime * 1000).toLocaleDateString(undefined, {
+            month: 'numeric', day: 'numeric', year: '2-digit'
+          });
+
+          // 2. Set the OPEN price using the official market open field
+          document.getElementById('stat-open').innerText = "$" + q.regularMarketOpen.toFixed(2);
+
+          // 3. Logic for CLOSE: 
+          // If the market is still open, show "--". 
+          // If it's closed (regularMarketPrice is the last traded price), we display it.
+          // Note: Yahoo's 'chartPreviousClose' is always yesterday's price.
+          const isMarketOpen = q.currentTradingPeriod.regular.end > (Date.now() / 1000);
+          
+          if (isMarketOpen) {
+              document.getElementById('stat-close').innerText = "--";
+          } else {
+              document.getElementById('stat-close').innerText = "$" + q.regularMarketPrice.toFixed(2);
+          }
+
         } catch (err) {
           document.getElementById('stat-date').innerText = "ERROR";
+        }ERROR";
         }
-      }
+      
     });
   </script>
 </body>
