@@ -1,66 +1,4 @@
-<!DOCTYPE html>
-<html class="bg-[#050505]">
-<head>
-  <meta charset="UTF-8">
-  <title>OVERNIGHT TICKER</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <style>
-    body { font-family: sans-serif; }
-    th, td { padding: 20px; font-size: 24px; color: #fff; }
-    input { font-size: 28px !important; padding: 20px !important; }
-  </style>
-</head>
-<body class="bg-[#050505] text-emerald-400">
-
-  <div class="p-8 border-b border-zinc-900">
-    <h1 class="text-white font-bold text-5xl">OVERNIGHT TICKER</h1>
-    <p class="text-xl text-white uppercase tracking-widest font-bold mt-2">Day Open/Close Price + AFTER HOURS/OVERNIGHT LIVE TRADE DATA 4:15pm-4:15am</p>
-  </div>
-
-  <div class="p-8">
-    <input type="text" id="search-box" placeholder="SEARCH TICKER (e.g. AAPL, TSLA)" class="w-full bg-[#050505] border-4 border-zinc-700 text-white uppercase outline-none focus:border-emerald-500">
-  </div>
-
-  <div id="ticker-stats" class="hidden px-8 mb-8 text-3xl font-bold">
-    <div class="flex gap-12 text-zinc-400 uppercase">
-      <span>DATE: <span id="stat-date" class="text-emerald-500">--</span></span>
-      <span>OPEN: <span id="stat-open" class="text-white">--</span></span>
-      <span>CLOSE: <span id="stat-close" class="text-white">--</span></span>
-    </div>
-  </div>
-
-  <div class="px-4">
-    <table class="w-full text-left">
-      <thead>
-        <tr class="border-b-4 border-zinc-800 text-zinc-500 text-2xl">
-          <th>TIME</th><th>STOCK</th><th>PRICE</th><th>SIZE</th>
-        </tr>
-      </thead>
-      <tbody id="tape-rows"></tbody>
-    </table>
-  </div>
-
-  <script>
-    const socket = io('https://overnight-tape.onrender.com');
-    
-    socket.on('trade', (t) => {
-      let row = document.getElementById('tape-rows').insertRow(0);
-      row.innerHTML = `<td>${new Date(t.t).toLocaleTimeString()}</td><td class="font-bold">${t.s}</td><td>$${t.p.toFixed(2)}</td><td>${t.v.toLocaleString()}</td>`;
-      if(document.getElementById('tape-rows').rows.length > 15) document.getElementById('tape-rows').deleteRow(15);
-    });
-
-    document.getElementById('search-box').addEventListener('keypress', async (e) => {
-      if (e.key === 'Enter') {
-        const sym = e.target.value.toUpperCase();
-        document.getElementById('ticker-stats').classList.remove('hidden');
-        
-        document.getElementById('stat-date').innerText = "LOADING...";
-        document.getElementById('stat-open').innerText = "--";
-        document.getElementById('stat-close').innerText = "--";
-        document.getElementById('tape-rows').innerHTML = ""; 
-
-    // 1. Get the official Day's Open (with a fallback)
+// 1. Get the official Day's Open (with a fallback)
 const openPrice = typeof q.regularMarketOpen === 'number' ? q.regularMarketOpen : 0;
 document.getElementById('stat-open').innerText = "$" + openPrice.toFixed(2);
 
@@ -77,11 +15,3 @@ if (isMarketOpen) {
     const closePrice = typeof q.regularMarketPrice === 'number' ? q.regularMarketPrice : 0;
     document.getElementById('stat-close').innerText = "$" + closePrice.toFixed(2);
 }
-        } catch (err) {
-          document.getElementById('stat-date').innerText = "ERROR";
-        }
-      }
-    });
-  </script>
-</body>
-</html>
