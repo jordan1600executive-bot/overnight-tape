@@ -76,7 +76,7 @@
           
           // If past market close time, show regularMarketPrice (which becomes the Close price)
           if (now >= marketEnd) {
-              document.getElementById('stat-close').innerText = "$" + (q.chartPreviousClose || 0).toFixed(2);
+              document.getElementById('stat-close').innerText = "$" + (q.regularMarketPrice|| 0).toFixed(2);
           } else {
               document.getElementById('stat-close').innerText = "--";
           }
