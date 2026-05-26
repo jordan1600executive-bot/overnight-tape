@@ -1,1 +1,43 @@
-After hours should be picked up tho and it’s not also u made font size too big and just wanted it to be vertical but in same style n size and search bar have examples u removed all that 
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { background-color: #000; color: #fff; font-family: sans-serif; margin: 10px; }
+        #header { margin-bottom: 10px; }
+        input { background: #111; color: #fff; border: 1px solid #333; padding: 5px; width: 100%; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { text-align: left; color: #888; border-bottom: 1px solid #333; padding: 5px 0; }
+        td { padding: 5px 0; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h2>OVERNIGHT TICKER</h2>
+        <input type="text" id="stockInput" placeholder="e.g. GOOG, TSLA, NVDA">
+    </div>
+    <table>
+        <thead>
+            <tr><th>TIME</th><th>STOCK</th><th>PRICE</th><th>SIZE</th></tr>
+        </thead>
+        <tbody id="tapeBody">
+            <!-- Incoming data will render here -->
+        </tbody>
+    </table>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const socket = io('https://overnight-tape.onrender.com');
+        const tapeBody = document.getElementById('tapeBody');
+
+        socket.on('trade', (data) => {
+            const row = `<tr>
+                <td>${data.time}</td>
+                <td>${data.symbol}</td>
+                <td>${data.price}</td>
+                <td>${data.size}</td>
+            </tr>`;
+            tapeBody.insertAdjacentHTML('afterbegin', row);
+        });
+    </script>
+</body>
+</html>
