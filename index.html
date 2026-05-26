@@ -1,55 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html class="bg-[#050505]">
 <head>
-    <style>
-        body { background-color: #000; color: #fff; font-family: sans-serif; margin: 10px; }
-        #header { margin-bottom: 10px; }
-        input { background: #111; color: #fff; border: 1px solid #333; padding: 5px; width: 100%; box-sizing: border-box; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th { text-align: left; color: #888; border-bottom: 1px solid #333; padding: 5px 0; }
-        td { padding: 5px 0; }
-    </style>
+  <meta charset="UTF-8">
+  <title>OVERNIGHT TICKER</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: sans-serif; }
+    .data-row { display: flex; justify-content: space-between; border-bottom: 1px solid #27272a; padding: 16px 0; }
+    .data-label { color: #a1a1aa; font-size: 16px; text-transform: uppercase; }
+    .data-value { color: #fff; font-size: 22px; font-weight: bold; }
+  </style>
 </head>
-<body>
-    <div id="header">
-        <h2>OVERNIGHT TICKER</h2>
-        <input type="text" id="stockInput" placeholder="e.g. GOOG, TSLA, NVDA">
-    </div>
-    <table>
-        <thead>
-            <tr>
-                <th>OPEN</th>
-                <th>CURRENT PRICE</th>
-                <th>CLOSE</th>
-                <th>AFTER HOURS</th>
-                <th>OVERNIGHT</th>
-            </tr>
-        </thead>
-        <tbody id="tapeBody">
-            <!-- Incoming data will render here -->
-        </tbody>
-    </table>
+<body class="bg-[#050505] text-emerald-400">
 
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-    <script>
-        const socket = io('https://overnight-tape.onrender.com');
-        const tapeBody = document.getElementById('tapeBody');
+  <div class="p-8 border-b border-zinc-900">
+    <h1 class="text-white font-bold text-4xl">OVERNIGHT TICKER</h1>
+    <p class="text-sm text-white uppercase tracking-widest mt-2">STOCK DAY, AFTER HOURS, AND OVERNIGHT DATA</p>
+  </div>
 
-        // Debugging listener to ensure data structure matches your 5 headers
-        socket.onAny((event, data) => {
-            console.log("RECEIVED EVENT:", event, "DATA:", data);
-        });
+  <div class="p-8">
+    <input type="text" id="search-box" placeholder="SEARCH TICKER (e.g. AAPL, TSLA)" class="w-full bg-[#050505] border-4 border-zinc-700 text-white uppercase outline-none focus:border-emerald-500 p-4 text-xl">
+  </div>
 
-        socket.on('trade', (data) => {
-            const row = `<tr>
-                <td>${data.open || '-'}</td>
-                <td>${data.currentPrice || '-'}</td>
-                <td>${data.close || '-'}</td>
-                <td>${data.afterHours || '-'}</td>
-                <td>${data.overnight || '-'}</td>
-            </tr>`;
-            tapeBody.insertAdjacentHTML('afterbegin', row);
-        });
-    </script>
+  <div id="dashboard" class="hidden px-8">
+    <div class="data-row"><span class="data-label">Date</span><span id="val-date" class="data-value text-emerald-500">--</span></div>
+    <div class="data-row"><span class="data-label">Previous Close</span><span id="val-close" class="data-value">--</span></div>
+    <div class="data-row"><span class="data-label">Open Price</span><span id="val-open" class="data-value">--</span></div>
+    <div class="data-row"><span class="data-label">Last Price</span><span id="val-current" class="data-value">--</span></div>
+    <div class="data-row"><span class="data-label">After Hours</span><span id="val-ah" class="data-value">--</span></div>
+  </div>
+
+<script>
+  document.getElementById('search-box').addEventListener('keypress', async (e) => {
+    if (e.key === 'Enter') {
+      const sym = e.target.value.toUpperCase();
+      document.getElementById('dashboard').classList.remove('hidden');
+      
+      try {
+        const response = await fetch(`https://my-stock-proxy.onrender.com/stock/${sym}`);
+        const data = await response.json();
+        const q = data.chart.result[0].meta;
+        const prices = data.chart.result[0].indicators.quote[0];
+
+        // Fill data
+        document.getElementById('val-date').innerText = new Date().toLocaleDateString();
+        document.getElementById('val-close').innerText = "$" + q.chartPreviousClose.toFixed(2);
+        document.getElementById('val-open').innerText = "$" + (prices.open[0] || 0).toFixed(2);
+        document.getElementById('val-current').innerText = "$" + (q.regularMarketPrice || 0).toFixed(2);
+        
+        // After Hours Logic: check postMarket first, then preMarket
+        const ahPrice = q.postMarketPrice || q.preMarketPrice;
+        document.getElementById('val-ah').innerText = ahPrice ? "$" + ahPrice.toFixed(2) : "NO DATA";
+
+      } catch (err) {
+        console.error("Fetch Error:", err);
+        alert("Could not fetch data for " + sym);
+      }
+    }
+  });
+</script>
 </body>
 </html>
