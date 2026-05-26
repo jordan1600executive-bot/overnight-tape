@@ -1,13 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html class="bg-[#050505]">
 <head>
+  <meta charset="UTF-8">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body class="bg-[#050505] text-white">
 
-  <input type="text" id="search-box" class="w-full bg-zinc-900 p-8 text-3xl">
-  <table class="w-full text-left">
+  <div class="p-8">
+    <input type="text" id="search-box" placeholder="SEARCH TICKER" class="w-full bg-zinc-900 p-6 text-3xl outline-none border-2 border-zinc-700 focus:border-emerald-500">
+  </div>
+
+  <div id="ticker-stats" class="px-8 text-3xl font-bold flex gap-12">
+    <span>OPEN: <span id="stat-open">--</span></span>
+    <span>CLOSE: <span id="stat-close">--</span></span>
+  </div>
+
+  <table class="w-full text-left mt-8">
     <tbody id="tape-rows"></tbody>
   </table>
 
@@ -16,17 +25,39 @@
     
     socket.on('trade', (t) => {
       let row = document.getElementById('tape-rows').insertRow(0);
-      row.innerHTML = `<td>${t.t}</td><td>${t.s}</td><td>${t.p}</td><td>${t.v}</td>`;
+      row.innerHTML = `<td class="p-4">${new Date(t.t).toLocaleTimeString()}</td><td class="p-4 font-bold">${t.s}</td><td class="p-4">$${t.p.toFixed(2)}</td><td class="p-4">${t.v.toLocaleString()}</td>`;
+      if(document.getElementById('tape-rows').rows.length > 15) document.getElementById('tape-rows').deleteRow(15);
     });
 
     document.getElementById('search-box').addEventListener('keypress', async (e) => {
       if (e.key === 'Enter') {
         const sym = e.target.value.toUpperCase();
-        // Just testing the fetch connection
-        const response = await fetch(`https://my-stock-proxy.onrender.com/stock/${sym}`);
-        const data = await response.json();
-        console.log("TESTING DATA:", data);
-        alert("Check console for data!");
+        
+        // Reset
+        document.getElementById('stat-open').innerText = "...";
+        document.getElementById('stat-close').innerText = "...";
+
+        try {
+          const response = await fetch(`https://my-stock-proxy.onrender.com/stock/${sym}`);
+          const data = await response.json();
+          const q = data.chart.result[0].meta;
+
+          // Set Open
+          document.getElementById('stat-open').innerText = "$" + q.regularMarketOpen.toFixed(2);
+
+          // Set Close (Show -- if market is still open)
+          const now = Date.now() / 1000;
+          if (q.currentTradingPeriod.regular.end > now) {
+            document.getElementById('stat-close').innerText = "--";
+          } else {
+            document.getElementById('stat-close').innerText = "$" + q.regularMarketPrice.toFixed(2);
+          }
+
+        } catch (err) {
+          console.error("DEBUG:", err);
+          document.getElementById('stat-open').innerText = "ERROR";
+          document.getElementById('stat-close').innerText = "ERROR";
+        }
       }
     });
   </script>
