@@ -1,57 +1,65 @@
 <!DOCTYPE html>
-<html class="bg-[#050505]">
+<html class="bg-black">
 <head>
-  <meta charset="UTF-8">
-  <title>OVERNIGHT TICKER</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { font-family: sans-serif; }
-    input { font-size: 20px !important; padding: 15px !important; }
-    .data-label { color: #a1a1aa; font-size: 12px; text-transform: uppercase; }
-    .data-value { color: #fff; font-size: 20px; font-weight: bold; }
-  </style>
+    <meta charset="UTF-8">
+    <title>OVERNIGHT TICKER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: sans-serif; }
+        /* Style for the vertical list: Label left, Value right */
+        .row { display: flex; justify-content: space-between; border-bottom: 1px solid #222; padding: 12px 0; }
+        .label { color: #a1a1aa; text-transform: uppercase; font-size: 14px; }
+        .value { color: #fff; font-weight: bold; font-size: 16px; }
+    </style>
 </head>
-<body class="bg-[#050505] text-emerald-400">
+<body class="bg-black text-white p-6">
 
-  <div class="p-6 border-b border-zinc-900">
-    <h1 class="text-white font-bold text-3xl">OVERNIGHT TICKER</h1>
-  </div>
+    <h1 class="text-3xl font-bold">OVERNIGHT TICKER</h1>
+    <p class="text-xs text-gray-500 uppercase mt-1">STOCK DAY, AFTER HOURS, AND OVERNIGHT DATA</p>
 
-  <div class="p-8">
-    <input type="text" id="search-box" placeholder="e.g. GOOG, TSLA, NVDA" class="w-full bg-[#050505] border-2 border-zinc-700 text-white uppercase outline-none focus:border-emerald-500">
-  </div>
+    <div class="mt-6">
+        <input type="text" id="search-box" placeholder="SEARCH TICKER (e.g. GOOG, TSLA)" 
+               class="w-full bg-black border-2 border-zinc-700 p-3 text-white uppercase outline-none focus:border-emerald-500">
+    </div>
 
-  <div id="dashboard" class="hidden px-8 grid grid-cols-2 md:grid-cols-7 gap-4">
-    <div><div class="data-label">Date</div><div id="val-date" class="data-value">--</div></div>
-    <div><div class="data-label">Prev Close</div><div id="val-close" class="data-value">--</div></div>
-    <div><div class="data-label">Open</div><div id="val-open" class="data-value">--</div></div>
-    <div><div class="data-label">Last</div><div id="val-current" class="data-value">--</div></div>
-    <div><div class="data-label">After Hours</div><div id="val-ah" class="data-value">--</div></div>
-    <div><div class="data-label">Overnight</div><div id="val-overnight" class="data-value">--</div></div>
-    <div><div class="data-label">Pre-Market</div><div id="val-pre" class="data-value">--</div></div>
-  </div>
+    <div id="dashboard" class="hidden mt-6">
+        <div class="row"><span class="label">Date</span><span id="val-date" class="value">--</span></div>
+        <div class="row"><span class="label">Previous Close</span><span id="val-close" class="value">--</span></div>
+        <div class="row"><span class="label">Open Price</span><span id="val-open" class="value">--</span></div>
+        <div class="row"><span class="label">Last Price</span><span id="val-current" class="value">--</span></div>
+        <div class="row"><span class="label">After Hours (4-8 PM)</span><span id="val-ah" class="value">--</span></div>
+        <div class="row"><span class="label">Overnight (8 PM-4 AM)</span><span id="val-over" class="value">--</span></div>
+        <div class="row"><span class="label">Pre-Market (4-9:30 AM)</span><span id="val-pre" class="value">--</span></div>
+    </div>
 
 <script>
   document.getElementById('search-box').addEventListener('keypress', async (e) => {
     if (e.key === 'Enter') {
       const sym = e.target.value.toUpperCase();
       document.getElementById('dashboard').classList.remove('hidden');
+      
       try {
         const response = await fetch(`https://my-stock-proxy.onrender.com/stock/${sym}`);
         const data = await response.json();
         const meta = data.chart.result[0].meta;
         const quotes = data.chart.result[0].indicators.quote[0];
 
-        document.getElementById('val-date').innerText = new Date().toLocaleDateString();
-        document.getElementById('val-close').innerText = "$" + meta.chartPreviousClose.toFixed(2);
-        document.getElementById('val-open').innerText = "$" + quotes.open[0].toFixed(2);
-        document.getElementById('val-current').innerText = "$" + meta.regularMarketPrice.toFixed(2);
-        
-        // Populate based on your specific session definitions
-        document.getElementById('val-ah').innerText = meta.postMarketPrice ? "$" + meta.postMarketPrice.toFixed(2) : "--";
-        document.getElementById('val-overnight').innerText = meta.preMarketPrice ? "$" + meta.preMarketPrice.toFixed(2) : "--"; // Placeholder logic for 8pm-4am
-        document.getElementById('val-pre').innerText = meta.preMarketPrice ? "$" + meta.preMarketPrice.toFixed(2) : "--";
+        // Format helper: if value exists, show $, else NO DATA
+        const fmt = (val) => (val && val > 0 ? "$" + val.toFixed(2) : "NO DATA");
 
+        document.getElementById('val-date').innerText = new Date().toLocaleDateString();
+        document.getElementById('val-close').innerText = fmt(meta.chartPreviousClose);
+        document.getElementById('val-open').innerText = fmt(quotes.open[0]);
+        document.getElementById('val-current').innerText = fmt(meta.regularMarketPrice);
+        
+        // Mapping API data to your specific definitions
+        // Note: Check console logs if these remain "NO DATA" to see if keys differ
+        document.getElementById('val-ah').innerText = fmt(meta.postMarketPrice);
+        document.getElementById('val-pre').innerText = fmt(meta.preMarketPrice);
+        
+        // If your proxy does not have a specific 'overnight' field, 
+        // you may need to check the API response structure to map it correctly.
+        document.getElementById('val-over').innerText = "NO DATA"; 
       } catch (err) {
         console.error("Fetch Error:", err);
       }
