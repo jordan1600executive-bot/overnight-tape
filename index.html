@@ -17,7 +17,13 @@
     </div>
     <table>
         <thead>
-            <tr><th>TIME</th><th>STOCK</th><th>PRICE</th><th>SIZE</th></tr>
+            <tr>
+                <th>OPEN</th>
+                <th>CURRENT PRICE</th>
+                <th>CLOSE</th>
+                <th>AFTER HOURS</th>
+                <th>OVERNIGHT</th>
+            </tr>
         </thead>
         <tbody id="tapeBody">
             <!-- Incoming data will render here -->
@@ -29,12 +35,18 @@
         const socket = io('https://overnight-tape.onrender.com');
         const tapeBody = document.getElementById('tapeBody');
 
+        // Debugging listener to ensure data structure matches your 5 headers
+        socket.onAny((event, data) => {
+            console.log("RECEIVED EVENT:", event, "DATA:", data);
+        });
+
         socket.on('trade', (data) => {
             const row = `<tr>
-                <td>${data.time}</td>
-                <td>${data.symbol}</td>
-                <td>${data.price}</td>
-                <td>${data.size}</td>
+                <td>${data.open || '-'}</td>
+                <td>${data.currentPrice || '-'}</td>
+                <td>${data.close || '-'}</td>
+                <td>${data.afterHours || '-'}</td>
+                <td>${data.overnight || '-'}</td>
             </tr>`;
             tapeBody.insertAdjacentHTML('afterbegin', row);
         });
