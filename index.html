@@ -74,11 +74,10 @@
           const isMarketOpen = q.currentTradingPeriod.regular.end > (Date.now() / 1000);
           
           if (isMarketOpen) {
-              document.getElementById('stat-close').innerText = "--";
+            document.getElementById('stat-close').innerText = "--";
           } else {
-              document.getElementById('stat-close').innerText = "$" + q.regularMarketPrice.toFixed(2);
+            document.getElementById('stat-close').innerText = "$" + q.regularMarketPrice.toFixed(2);
           }
-
         } catch (err) {
           document.getElementById('stat-date').innerText = "ERROR";
         }
