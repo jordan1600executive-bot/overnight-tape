@@ -1,80 +1,71 @@
-
-
 <!DOCTYPE html>
 <html class="bg-[#050505]">
 <head>
-  <meta charset="UTF-8">
-  <title>OVERNIGHT TICKER</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <style>
-    body { font-family: sans-serif; }
-    th, td { padding: 20px; font-size: 24px; color: #fff; }
-    input { font-size: 28px !important; padding: 20px !important; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OVERNIGHT TICKER</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<style>
+  body { font-family: sans-serif; }
+  th, td { padding: 12px; font-size: 18px; color: #fff; }
+  #search-box { font-size: 20px; padding: 15px; width: 100%; box-sizing: border-box; }
+</style>
 </head>
 <body class="bg-[#050505] text-emerald-400">
 
-  <div class="p-8 border-b border-zinc-900">
-    <h1 class="text-white font-bold text-5xl">OVERNIGHT TICKER</h1>
-    <p class="text-xl text-white uppercase tracking-widest font-bold mt-2">Day Open/Close Price + AFTER HOURS/OVERNIGHT LIVE TRADE DATA 4:15pm-4:15am</p>
-  </div>
+<div class="p-4 border-b border-zinc-900">
+  <h1 class="text-white font-bold text-3xl">OVERNIGHT TICKER</h1>
+</div>
 
-  <div class="p-8">
-    <input type="text" id="search-box" placeholder="SEARCH TICKER (e.g. AAPL, TSLA)" class="w-full bg-[#050505] border-4 border-zinc-700 text-white uppercase outline-none focus:border-emerald-500">
-  </div>
+<div class="p-4">
+  <input type="text" id="search-box" placeholder="SEARCH TICKER" class="bg-[#050505] border-2 border-zinc-700 text-white uppercase outline-none focus:border-emerald-500">
+</div>
 
-  <div id="ticker-stats" class="hidden px-8 mb-8 text-3xl font-bold">
-    <div class="flex gap-12 text-zinc-400 uppercase">
-      <span>DATE: <span id="stat-date" class="text-emerald-500">--</span></span>
-      <span>OPEN: <span id="stat-open" class="text-white">--</span></span>
-      <span>CLOSE: <span id="stat-close" class="text-white">--</span></span>
-    </div>
-  </div>
+<div id="ticker-stats" class="hidden px-4 mb-4 text-xl font-bold">
+  <div class="flex flex-col gap-2 text-zinc-400 uppercase">
+    <span>DATE: <span id="stat-date" class="text-emerald-500">--</span></span>
+    <span>OPEN: <span id="stat-open" class="text-white">--</span></span>
+    <span>CLOSE: <span id="stat-close" class="text-white">--</span></span>
+  </div>
+</div>
 
-  <div class="px-4">
-    <table class="w-full text-left">
-      <thead>
-        <tr class="border-b-4 border-zinc-800 text-zinc-500 text-2xl">
-          <th>TIME</th><th>STOCK</th><th>PRICE</th><th>SIZE</th>
-        </tr>
-      </thead>
-      <tbody id="tape-rows"></tbody>
-    </table>
-  </div>
+<div class="px-2">
+  <table class="w-full text-left">
+    <thead>
+      <tr class="text-zinc-500 text-sm">
+        <th>TIME</th><th>STOCK</th><th>PRICE</th><th>SIZE</th>
+      </tr>
+    </thead>
+    <tbody id="tape-rows"></tbody>
+  </table>
+</div>
 
-  <script>
-    const socket = io('https://overnight-tape.onrender.com');
-    
-    socket.on('trade', (t) => {
-      let row = document.getElementById('tape-rows').insertRow(0);
-      row.innerHTML = `<td>${new Date(t.t).toLocaleTimeString()}</td><td class="font-bold">${t.s}</td><td>$${t.p.toFixed(2)}</td><td>${t.v.toLocaleString()}</td>`;
-      if(document.getElementById('tape-rows').rows.length > 15) document.getElementById('tape-rows').deleteRow(15);
-    });
+<script>
+  const socket = io('https://overnight-tape.onrender.com');
+  socket.on('trade', (t) => {
+    let row = document.getElementById('tape-rows').insertRow(0);
+    row.innerHTML = `<td class="text-xs">${new Date(t.t).toLocaleTimeString()}</td><td class="font-bold">${t.s}</td><td>$${t.p.toFixed(2)}</td><td>${t.v.toLocaleString()}</td>`;
+    if(document.getElementById('tape-rows').rows.length > 10) document.getElementById('tape-rows').deleteRow(10);
+  });
 
-    document.getElementById('search-box').addEventListener('keypress', async (e) => {
-      if (e.key === 'Enter') {
-        const sym = e.target.value.toUpperCase();
-        document.getElementById('ticker-stats').classList.remove('hidden');
-        
-        document.getElementById('stat-date').innerText = "LOADING...";
-        document.getElementById('stat-open').innerText = "--";
-        document.getElementById('stat-close').innerText = "--";
-        document.getElementById('tape-rows').innerHTML = ""; 
-
-        try {
-          const response = await fetch(`https://my-stock-proxy.onrender.com/stock/${sym}`);
-          const data = await response.json();
-          const q = data.chart.result[0].meta;
-          
-          document.getElementById('stat-date').innerText = new Date(q.regularMarketTime * 1000).toLocaleDateString();
-          document.getElementById('stat-open').innerText = "$" + q.regularMarketPrice.toFixed(2);
-          document.getElementById('stat-close').innerText = "$" + q.chartPreviousClose.toFixed(2);
-        } catch (err) {
-          document.getElementById('stat-date').innerText = "ERROR";
-        }
-      }
-    });
-  </script>
+  document.getElementById('search-box').addEventListener('keypress', async (e) => {
+    if (e.key === 'Enter') {
+      const sym = e.target.value.toUpperCase();
+      document.getElementById('ticker-stats').classList.remove('hidden');
+      try {
+        const response = await fetch(`https://my-stock-proxy.onrender.com/stock/${sym}`);
+        const data = await response.json();
+        const q = data.chart.result[0].meta;
+        document.getElementById('stat-date').innerText = new Date(q.regularMarketTime * 1000).toLocaleDateString();
+        document.getElementById('stat-open').innerText = "$" + (q.regularMarketOpen || 0).toFixed(2);
+        const isMarketOpen = q.currentTradingPeriod.regular.end > (Date.now() / 1000);
+        document.getElementById('stat-close').innerText = isMarketOpen ? "--" : "$" + (q.regularMarketPrice || 0).toFixed(2);
+      } catch (err) {
+        document.getElementById('stat-date').innerText = "ERROR";
+      }
+    }
+  });
+</script>
 </body>
 </html>
