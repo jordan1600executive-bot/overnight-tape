@@ -65,8 +65,20 @@
           const data = await response.json();
           const q = data.chart.result[0].meta;
           
-          document.getElementById('stat-date').innerText = new Date(q.regularMarketTime * 1000).toLocaleDateString();
-          document.getElementById('stat-open').innerText = "$" + q.regularMarketPrice.toFixed(2);
+// 1. Get the official Day's Open
+document.getElementById('stat-open').innerText = "$" + q.regularMarketOpen.toFixed(2);
+
+// 2. Logic for Close: Check if the market is currently open
+const now = Date.now() / 1000;
+const isMarketOpen = q.currentTradingPeriod.regular.end > now;
+
+if (isMarketOpen) {
+    // If the market is still open, show --
+    document.getElementById('stat-close').innerText = "--";
+} else {
+    // If the market is closed, show the final closing price
+    document.getElementById('stat-close').innerText = "$" + q.regularMarketPrice.toFixed(2);
+}
           document.getElementById('stat-close').innerText = "$" + q.chartPreviousClose.toFixed(2);
         } catch (err) {
           document.getElementById('stat-date').innerText = "ERROR";
