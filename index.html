@@ -8,14 +8,14 @@
     body { font-family: sans-serif; }
     input { font-size: 28px !important; padding: 20px !important; }
     .data-label { color: #a1a1aa; font-size: 20px; text-transform: uppercase; }
-    .data-value { color: #fff; font-size: 32px; font-weight: bold; } .date-green { color: #34d399 !important; }
+    .data-value { color: #fff; font-size: 32px; font-weight: bold; }
   </style>
 </head>
 <body class="bg-[#050505] text-emerald-400">
 
   <div class="p-8 border-b border-zinc-900">
     <h1 class="text-white font-bold text-5xl">OVERNIGHT TICKER</h1>
-    <p class="text-xl text-white uppercase tracking-wide font-bold mt-2">STOCK DAY DATA</p>
+    <p class="text-xl text-white uppercase tracking-wide font-bold mt-2">STOCK DAY AND AFTER HOURS AND OVERNIGHT DATA</p>
   </div>
 
   <div class="p-8">
@@ -23,11 +23,11 @@
   </div>
 
   <div id="dashboard" class="hidden px-8 grid grid-cols-2 md:grid-cols-5 gap-6">
-    <div><div class="data-label">Date</div> <div id="val-date" class="data-value date-green">--</div>
+    <div><div class="data-label">Date</div><div id="val-date" class="data-value">--</div></div>
     <div><div class="data-label">Prev Close</div><div id="val-close" class="data-value">--</div></div>
     <div><div class="data-label">Open Price</div><div id="val-open" class="data-value">--</div></div>
     <div><div class="data-label">Last Price</div><div id="val-current" class="data-value">--</div></div>
-    
+    <
 
 <script>
   document.getElementById('search-box').addEventListener('keypress', async (e) => {
