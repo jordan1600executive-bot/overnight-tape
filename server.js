@@ -3,7 +3,7 @@ const fetch = require('node-fetch');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// This fixes CORS errors so your website can talk to the proxy
+// CORS setup to allow your website to communicate with your proxy
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -12,23 +12,30 @@ app.use((req, res, next) => {
 
 app.get('/stock/:symbol', async (req, res) => {
     const symbol = req.params.symbol;
+    // allorigins is a reliable public proxy for Yahoo Finance data
+    const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+
     try {
-        // This is the Yahoo fetch with the User-Agent bypass
-        const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`, {
+        const response = await fetch(proxyUrl, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             }
         });
 
         if (!response.ok) {
-            throw new Error(`Yahoo responded with status: ${response.status}`);
+            throw new Error(`Proxy error status: ${response.status}`);
         }
 
         const data = await response.json();
-        res.json(data);
+        
+        // allorigins wraps the content in a 'contents' string, so we need to parse it back
+        const actualData = JSON.parse(data.contents);
+        res.json(actualData);
+        
     } catch (error) {
-        console.error("Proxy Error:", error);
-        res.status(500).json({ error: "Failed to fetch data" });
+        console.error("Fetch Error:", error);
+        res.status(500).json({ error: "Failed to fetch data via proxy" });
     }
 });
 
