@@ -27,8 +27,7 @@
     <div><div class="data-label">Prev Close</div><div id="val-close" class="data-value">--</div></div>
     <div><div class="data-label">Open Price</div><div id="val-open" class="data-value">--</div></div>
     <div><div class="data-label">Last Price</div><div id="val-current" class="data-value">--</div></div>
-    <div><div class="data-label">After Hours</div><div id="val-ah" class="data-value">--</div></div>
-  </div>
+    <
 
 <script>
   document.getElementById('search-box').addEventListener('keypress', async (e) => {
@@ -48,10 +47,7 @@
         document.getElementById('val-close').innerText = "$" + q.chartPreviousClose.toFixed(2);
         document.getElementById('val-open').innerText = "$" + prices.open[0].toFixed(2);
         document.getElementById('val-current').innerText = "$" + q.regularMarketPrice.toFixed(2);
-        
-        // After Hours Logic
-        const ahPrice = q.postMarketPrice || q.preMarketPrice || 0;
-        document.getElementById('val-ah').innerText = ahPrice > 0 ? "$" + ahPrice.toFixed(2) : "--";
+
 
       } catch (err) {
         console.error("Fetch Error:", err);
