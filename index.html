@@ -27,31 +27,56 @@
     <div><div class="data-label">Prev Close</div><div id="val-close" class="data-value">--</div></div>
     <div><div class="data-label">Open Price</div><div id="val-open" class="data-value">--</div></div>
     <div><div class="data-label">Last Price</div><div id="val-current" class="data-value">--</div></div>
-    
+  </div>
 
 <script>
+  // List of proxies to try
+  const proxies = [
+    "https://my-stock-proxy.onrender.com/stock/", 
+    "https://api.allorigins.win/get?url=" 
+  ];
+
+  async function fetchStockData(sym) {
+    for (const proxy of proxies) {
+      try {
+        let fetchUrl = proxy.includes("allorigins") 
+            ? `${proxy}${encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + sym)}`
+            : `${proxy}${sym}`;
+
+        const response = await fetch(fetchUrl);
+        if (!response.ok) throw new Error("Proxy failed");
+
+        let data = await response.json();
+        
+        // Handle format if using a general proxy like allorigins
+        if (proxy.includes("allorigins")) {
+            data = JSON.parse(data.contents);
+        }
+
+        return data; // Return the data if successful
+      } catch (err) {
+        console.warn(`Proxy ${proxy} failed, trying next...`);
+      }
+    }
+    throw new Error("All proxies failed");
+  }
+
   document.getElementById('search-box').addEventListener('keypress', async (e) => {
     if (e.key === 'Enter') {
       const sym = e.target.value.toUpperCase();
       document.getElementById('dashboard').classList.remove('hidden');
       
       try {
-        // We use your proxy to get the data
-        const response = await fetch(`https://my-stock-proxy.onrender.com/stock/${sym}`);
-        const data = await response.json();
+        const data = await fetchStockData(sym);
         const q = data.chart.result[0].meta;
         const prices = data.chart.result[0].indicators.quote[0];
 
-        // Fill data
         document.getElementById('val-date').innerText = new Date().toLocaleDateString();
         document.getElementById('val-close').innerText = "$" + q.chartPreviousClose.toFixed(2);
         document.getElementById('val-open').innerText = "$" + prices.open[0].toFixed(2);
         document.getElementById('val-current').innerText = "$" + q.regularMarketPrice.toFixed(2);
-
-
       } catch (err) {
-        console.error("Fetch Error:", err);
-        alert("Could not fetch data for " + sym);
+        alert("Could not fetch data for " + sym + ". Please try again.");
       }
     }
   });
